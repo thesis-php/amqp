@@ -14,13 +14,17 @@ final class Confirmation
 {
     /**
      * @param iterable<self> $confirmations
-     * @return \Traversable<non-negative-int, PublishResult>
+     * @return array<non-negative-int, PublishResult>
      */
-    public static function awaitAll(iterable $confirmations, ?Cancellation $cancellation = null): \Traversable
+    public static function awaitAll(iterable $confirmations, ?Cancellation $cancellation = null): array
     {
+        $publishResults = [];
+
         foreach (self::iterate($confirmations, $cancellation) as $deliveryTag => $future) {
-            yield $deliveryTag => $future->await($cancellation);
+            $publishResults[$deliveryTag] = $future->await($cancellation);
         }
+
+        return $publishResults;
     }
 
     /**
