@@ -86,7 +86,7 @@ final class Buffer implements
         return $this;
     }
 
-    public function writeTimestamp(\DateTimeInterface $date): self
+    public function writeTimestamp(\DateTimeImmutable $date): self
     {
         $timestamp = $date->getTimestamp();
         \assert($timestamp >= 0);
@@ -129,7 +129,7 @@ final class Buffer implements
             \is_bool($value) => $this
                 ->writeUint8(Type::boolean->value)
                 ->writeUint8((int) $value),
-            $value instanceof \DateTimeInterface => $this
+            $value instanceof \DateTimeImmutable => $this
                 ->writeUint8(Type::timestamp->value)
                 ->writeTimestamp($value),
             $value === null => $this->writeUint8(Type::null->value),
@@ -217,7 +217,7 @@ final class Buffer implements
         return $this->endian->unpackDouble($this->consume(8));
     }
 
-    public function readTimestamp(): \DateTimeInterface
+    public function readTimestamp(): \DateTimeImmutable
     {
         return new \DateTimeImmutable(\sprintf('@%s', $this->readUint64()));
     }

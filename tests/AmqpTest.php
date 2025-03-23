@@ -628,7 +628,7 @@ final class AmqpTest extends TestCase
         ?string $correlationId = null,
         ?string $expiration = null,
         ?string $messageId = null,
-        ?\DateTimeInterface $timestamp = null,
+        ?\DateTimeImmutable $timestamp = null,
         ?string $type = null,
         ?string $userId = null,
         ?string $appId = null,

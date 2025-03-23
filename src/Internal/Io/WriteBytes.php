@@ -41,7 +41,7 @@ interface WriteBytes
 
     public function writeText(string $v): self;
 
-    public function writeTimestamp(\DateTimeInterface $date): self;
+    public function writeTimestamp(\DateTimeImmutable $date): self;
 
     /**
      * @param array<array-key, mixed> $values

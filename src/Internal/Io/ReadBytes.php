@@ -44,7 +44,7 @@ interface ReadBytes
     /**
      * @throws \Throwable
      */
-    public function readTimestamp(): \DateTimeInterface;
+    public function readTimestamp(): \DateTimeImmutable;
 
     public function readDecimal(): int;
 

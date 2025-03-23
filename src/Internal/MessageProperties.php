@@ -43,7 +43,7 @@ final class MessageProperties
         public readonly ?string $replyTo = null,
         public readonly ?string $expiration = null,
         public readonly ?string $messageId = null,
-        public readonly ?\DateTimeInterface $timestamp = null,
+        public readonly ?\DateTimeImmutable $timestamp = null,
         public readonly ?string $type = null,
         public readonly ?string $userId = null,
         public readonly ?string $appId = null,
