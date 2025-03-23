@@ -117,6 +117,10 @@ final class Client
      */
     public function disconnect(int $replyCode = 200, string $replyText = '', Cancellation $cancellation = new NullCancellation()): void
     {
+        if ($this->connection === null) {
+            return;
+        }
+
         foreach ($this->channels as $channel) {
             $channel->close($replyCode, $replyText);
         }
@@ -230,5 +234,12 @@ final class Client
         return $this->hooks
             ->oneshot($channelId, $frameType)
             ->await($cancellation);
+    }
+
+    public function __destruct()
+    {
+        if (\PHP_VERSION_ID >= 80400) {
+            $this->disconnect();
+        }
     }
 }
