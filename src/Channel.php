@@ -188,7 +188,7 @@ final class Channel
     /**
      * @param callable(Delivery, self): void $callback
      * @param array<string, mixed> $arguments
-     * @return non-empty-string
+     * @return non-empty-string Consumer tag
      * @throws \Throwable
      */
     public function consume(

@@ -634,10 +634,12 @@ $client->connect();
 $channel = $client->channel();
 
 $channel->qos(prefetchCount: 1);
-$channel->consume(static function (Delivery $delivery, Channel $_): void {
+$consumerTag = $channel->consume(static function (Delivery $delivery, Channel $_): void {
     var_dump($delivery->body);
     $delivery->ack();    
-}, 'service.a.events');
+}, queue: 'service.a.events');
+
+$channel->cancel($consumerTag);
 ```
 
 #### consume iterator
