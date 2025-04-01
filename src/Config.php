@@ -52,7 +52,7 @@ final class Config
         public readonly float $connectionTimeout = self::DEFAULT_CONNECTION_TIMEOUT,
         public readonly int $channelMax = self::MAX_CHANNEL,
         public readonly int $frameMax = self::MAX_FRAME,
-        public readonly bool $tcpNoDelay = false,
+        public readonly bool $tcpNoDelay = true,
     ) {
         $authMechanisms = $this->authMechanisms;
         if (\count($authMechanisms) === 0) {
@@ -135,9 +135,9 @@ final class Config
             $frameMax = min($frameMax, (int) $query['frame_max']);
         }
 
-        $tcpNoDelay = false;
-        if (isset($query['tcp_nodelay']) && ($nodelay = filter_var($query['tcp_nodelay'], FILTER_VALIDATE_BOOL))) {
-            $tcpNoDelay = $nodelay;
+        $tcpNoDelay = true;
+        if (isset($query['tcp_nodelay'])) {
+            $tcpNoDelay = filter_var($query['tcp_nodelay'], FILTER_VALIDATE_BOOL);
         }
 
         $host = self::DEFAULT_HOST;
@@ -223,7 +223,7 @@ final class Config
             connectionTimeout: $options['connection_timeout'] ?? self::DEFAULT_CONNECTION_TIMEOUT,
             channelMax: $options['channel_max'] ?? self::MAX_CHANNEL,
             frameMax: $options['frame_max'] ?? self::MAX_FRAME,
-            tcpNoDelay: $options['tcp_nodelay'] ?? false,
+            tcpNoDelay: $options['tcp_nodelay'] ?? true,
         );
     }
 

@@ -192,7 +192,7 @@ final class AmqpTest extends TestCase
     #[TestWith([20])]
     public function testChannelsExhausted(int $channelMax): void
     {
-        $client = new Client(Config::fromURI("{$this->dsn}&channel_max={$channelMax}"));
+        $client = new Client(Config::fromURI("{$this->dsn}?channel_max={$channelMax}"));
         $client->connect();
 
         for ($i = 0; $i < $channelMax; ++$i) {

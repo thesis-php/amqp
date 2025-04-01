@@ -205,7 +205,7 @@ $config = Config::fromURI('amqp://guest:guest@localhost:5672/?frame_max=50000');
 
 #### tcp_nodelay
 
-You can enable `tcp nodelay` by setting the value to `true`.
+You can disable `tcp nodelay` by setting the value to `false`.
 
 ```php
 <?php
@@ -214,10 +214,11 @@ declare(strict_types=1);
 
 use Thesis\Amqp\Config;
 
-$config = Config::fromURI('amqp://guest:guest@localhost:5672/?tcp_nodelay=true');
+$config = Config::fromURI('amqp://guest:guest@localhost:5672/?tcp_nodelay=false');
 ```
 
-This can **seriously increase** the speed of network packets transfer rate.
+Since we use an internal buffer to work with data, which reduces the number of network accesses, there is no need to turn off `tcp nodelay`.
+This may **seriously reduce** client performance.
 
 ### Client
 

@@ -28,6 +28,7 @@ final class ConfigTest extends TestCase
         self::assertNull($config->keyFile);
         self::assertNull($config->cacertFile);
         self::assertCount(0, $config->authMechanisms);
+        self::assertTrue($config->tcpNoDelay);
     }
 
     public function testUriParsed(): void
@@ -68,7 +69,7 @@ final class ConfigTest extends TestCase
 
     public function testUriParsedWithParameters(): void
     {
-        $config = Config::fromURI('amqps://foo.bar/test?auth_mechanism=plain&auth_mechanism=amqplain&heartbeat=2&connection_timeout=20&channel_max=8&frame_max=10');
+        $config = Config::fromURI('amqps://foo.bar/test?auth_mechanism=plain&auth_mechanism=amqplain&heartbeat=2&connection_timeout=20&channel_max=8&frame_max=10&tcp_nodelay=false');
         self::assertSame(Scheme::amqps, $config->scheme);
         self::assertSame('foo.bar', $config->host);
         self::assertSame(5672, $config->port);
@@ -87,6 +88,7 @@ final class ConfigTest extends TestCase
         self::assertCount(2, $config->sasl());
         self::assertInstanceOf(Plain::class, $config->sasl()[0]);
         self::assertInstanceOf(AMQPlain::class, $config->sasl()[1]);
+        self::assertFalse($config->tcpNoDelay);
     }
 
     public function testInvalidAuthMechanism(): void
