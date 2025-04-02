@@ -69,30 +69,47 @@ final class Channel
         bool $mandatory = false,
         bool $immediate = false,
     ): ?Confirmation {
-        $this->connection->writeFrame((function () use ($message, $exchange, $routingKey, $mandatory, $immediate): \Generator {
-            yield Protocol\Method::basicPublish(
-                channelId: $this->channelId,
-                exchange: $exchange,
-                routingKey: $routingKey,
-                mandatory: $mandatory,
-                immediate: $immediate,
-            );
+        $this->connection->writeFrame(
+            $this->doPublish($message, $exchange, $routingKey, $mandatory, $immediate),
+        );
 
-            yield new Protocol\Header(
-                channelId: $this->channelId,
-                classId: Protocol\ClassType::BASIC,
-                properties: MessageProperties::fromMessage($message),
-            );
+        return $this->mode === ChannelMode::confirm ? $this->confirms->newConfirmation() : null;
+    }
 
-            foreach (Internal\chunks($message->body, $this->properties->maxFrame()) as $chunk) {
-                yield new Protocol\Body(
-                    channelId: $this->channelId,
-                    body: $chunk,
-                );
+    /**
+     * @return list<Message>
+     * @throws \Throwable
+     */
+    public function publishBatch(PublishBatch $batch): array
+    {
+        /** @var list<Confirmation> $confirmations */
+        $confirmations = [];
+
+        /** @var array<non-negative-int, Message> $messages */
+        $messages = [];
+
+        $this->connection->writeFrame((function () use ($batch, &$confirmations, &$messages): \Generator {
+            foreach ($batch as [$message, $exchange, $routingKey, $mandatory, $immediate]) {
+                yield from $this->doPublish($message, $exchange, $routingKey, $mandatory, $immediate);
+
+                if ($this->mode === ChannelMode::confirm) {
+                    $confirmation = $this->confirms->newConfirmation();
+
+                    $confirmations[] = $confirmation;
+                    $messages[$confirmation->deliveryTag] = $message;
+                }
             }
         })());
 
-        return $this->mode === ChannelMode::confirm ? $this->confirms->newConfirmation() : null;
+        $unconfirmed = [];
+
+        foreach (Confirmation::awaitAll($confirmations) as $deliveryTag => $publishResult) {
+            if ($publishResult !== PublishResult::Acked) {
+                $unconfirmed[] = $messages[$deliveryTag];
+            }
+        }
+
+        return $unconfirmed;
     }
 
     /**
@@ -632,6 +649,38 @@ final class Channel
     {
         $this->hooks->reject($this->channelId, $e);
         $this->hooks->unsubscribe($this->channelId);
+    }
+
+    /**
+     * @return iterable<array-key, Frame>
+     */
+    private function doPublish(
+        Message $message,
+        string $exchange = '',
+        string $routingKey = '',
+        bool $mandatory = false,
+        bool $immediate = false,
+    ): iterable {
+        yield Protocol\Method::basicPublish(
+            channelId: $this->channelId,
+            exchange: $exchange,
+            routingKey: $routingKey,
+            mandatory: $mandatory,
+            immediate: $immediate,
+        );
+
+        yield new Protocol\Header(
+            channelId: $this->channelId,
+            classId: Protocol\ClassType::BASIC,
+            properties: MessageProperties::fromMessage($message),
+        );
+
+        foreach (Internal\chunks($message->body, $this->properties->maxFrame()) as $chunk) {
+            yield new Protocol\Body(
+                channelId: $this->channelId,
+                body: $chunk,
+            );
+        }
     }
 
     /**

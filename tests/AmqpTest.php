@@ -243,6 +243,46 @@ final class AmqpTest extends TestCase
      * @param non-empty-string $exchange
      * @param non-empty-string $queue
      * @param non-empty-string $routingKey
+     */
+    #[TestWith(['events', 'events.orders', 'orders'])]
+    public function testPublishBatchGetAck(string $exchange, string $queue, string $routingKey): void
+    {
+        $channel = $this->client->channel();
+        $channel->exchangeDelete($exchange);
+        $channel->queueDelete($queue);
+
+        $channel->exchangeDeclare($exchange, autoDelete: true);
+        self::assertSame(0, $channel->queueDeclare($queue, autoDelete: true)->messages);
+        $channel->queueBind($queue, $exchange, $routingKey);
+
+        $channel->confirmSelect();
+
+        self::assertCount(0, $channel->publishBatch(
+            PublishBatch::default()
+                ->add(new Message('1'), exchange: $exchange, routingKey: $routingKey)
+                ->add(new Message('2'), exchange: $exchange, routingKey: $routingKey)
+                ->add(new Message('3'), exchange: $exchange, routingKey: $routingKey)
+        ));
+
+        for ($i = 1; $i <= 3; ++$i) {
+            $delivery = $channel->get($queue);
+            self::assertNotNull($delivery);
+            self::assertSame("{$i}", $delivery->body);
+            self::assertSame($exchange, $delivery->exchange);
+            self::assertSame($routingKey, $delivery->routingKey);
+
+            $delivery->ack();
+        }
+
+        self::assertSame(0, $channel->queueDeclare($queue, passive: true, autoDelete: true)->messages);
+
+        $channel->close();
+    }
+
+    /**
+     * @param non-empty-string $exchange
+     * @param non-empty-string $queue
+     * @param non-empty-string $routingKey
      * @param non-empty-string $message
      * @param array<string, mixed> $headers
      * @param positive-int $messageCount

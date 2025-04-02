@@ -30,6 +30,7 @@ composer require thesis/amqp
   - [queue purge](#queue-purge)
   - [queue delete](#queue-delete)
   - [publish](#publish)
+  - [publish batch](#publish-batch)
   - [get](#get)
   - [ack](#ack)
   - [nack](#nack)
@@ -469,6 +470,39 @@ $channel->publish(new Message(
     expiration: '5000', // 5 seconds.
 ));
 ```
+
+#### publish batch
+
+You can publish a batch of messages.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Config;
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Message;
+use Thesis\Amqp\PublishBatch;
+
+$client = new Client(Config::default());
+$client->connect();
+
+$channel = $client->channel();
+$unconfirmed = $channel->publishBatch(
+    PublishBatch::default()
+        ->add(new Message('x'), routingKey: 'test'),
+        ->add(new Message('y'), routingKey: 'test'),
+        ->add(new Message('z'), routingKey: 'test'),
+);
+
+// Only if $channel->confirmSelect() was called.
+if (\count($unconfirmed) > 0) {
+    // retry publish.
+}
+```
+
+If `publisher confirms` is enabled, you will receive back a list of unconfirmed messages that you can try to publish again.
 
 #### get
 
