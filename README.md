@@ -62,6 +62,18 @@ use Thesis\Amqp\Config;
 $config = Config::fromURI('amqp://guest:guest@localhost:5672/');
 ```
 
+Multiple addresses is supported. The client will connect to the first available amqp server host.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Config;
+
+$config = Config::fromURI('amqp://guest:guest@localhost:5672,localhost:5673/');
+```
+
 From array (for example, if you keep the configuration of your application as an array).
 
 ```php
@@ -73,8 +85,7 @@ use Thesis\Amqp\Config;
 
 $config = Config::fromArray([
     'scheme' => 'amqp',
-    'host' => 'localhost',
-    'port' => 5672,
+    'urls' => ['localhost:5672'],
     'user' => 'guest',
     'password' => 'guest',
 ]);
@@ -90,8 +101,7 @@ declare(strict_types=1);
 use Thesis\Amqp\Config;
 
 $config = new Config(
-    host: 'localhost',
-    port: 5672,
+    urls: ['localhost:5672'],
     user: 'guest',
     vhost: '/test',
     authMechanisms: ['plain', 'amqplain'],

@@ -8,6 +8,7 @@ use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\NullCancellation;
 use Amp\Socket;
+use Thesis\Amqp\Exception\ConnectionNotAvailable;
 use Thesis\Amqp\Internal\Hooks;
 use Thesis\Amqp\Internal\Io\AmqpConnection;
 use Thesis\Amqp\Internal\Properties;
@@ -49,20 +50,7 @@ final class Client
             return;
         }
 
-        $context = (new Socket\ConnectContext())
-            ->withConnectTimeout($this->config->connectionTimeout);
-
-        if ($this->config->tcpNoDelay) {
-            $context = $context->withTcpNoDelay();
-        }
-
-        $socket = Socket\connect($this->config->connectionDsn(), $context);
-
-        if ($this->config->scheme === Scheme::amqps) {
-            $socket->setupTls();
-        }
-
-        $this->connection = new AmqpConnection($socket);
+        $this->connection = $this->createConnection();
 
         $start = $this->connection->rpc(Frame\ProtocolHeader::frame, Frame\ConnectionStart::class);
 
@@ -218,6 +206,49 @@ final class Client
     private function connection(): AmqpConnection
     {
         return $this->connection ?: throw new Exception\ConnectionIsClosed();
+    }
+
+    private function createConnection(): AmqpConnection
+    {
+        $exceptions = [];
+
+        foreach ($this->config->connectionUrls() as $url) {
+            try {
+                return new AmqpConnection($this->createSocket($url));
+            } catch (\Throwable $e) {
+                $exceptions[$url] = $e->getMessage();
+            }
+        }
+
+        throw new ConnectionNotAvailable(vsprintf('No available amqp host: %s.', [
+            implode('; ', array_map(
+                static fn(string $url, string $exception): string => "{$url}: {$exception}",
+                array_keys($exceptions),
+                array_values($exceptions),
+            )),
+        ]));
+    }
+
+    /**
+     * @param non-empty-string $url
+     * @throws \Throwable
+     */
+    private function createSocket(string $url): Socket\Socket
+    {
+        $context = (new Socket\ConnectContext())
+            ->withConnectTimeout($this->config->connectionTimeout);
+
+        if ($this->config->tcpNoDelay) {
+            $context = $context->withTcpNoDelay();
+        }
+
+        $socket = Socket\connect($url, $context);
+
+        if ($this->config->scheme === Scheme::amqps) {
+            $socket->setupTls();
+        }
+
+        return $socket;
     }
 
     /**

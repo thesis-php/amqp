@@ -19,8 +19,7 @@ final class ConfigTest extends TestCase
         self::assertSame(Scheme::amqp, $config->scheme);
         self::assertSame('guest', $config->user);
         self::assertSame('guest', $config->password);
-        self::assertSame('localhost', $config->host);
-        self::assertSame(5672, $config->port);
+        self::assertSame(['localhost:5672'], $config->urls);
         self::assertSame(60, $config->heartbeat);
         self::assertSame(0xFFFF, $config->channelMax);
         self::assertEquals(10, $config->connectionTimeout);
@@ -37,8 +36,7 @@ final class ConfigTest extends TestCase
         self::assertSame(Scheme::amqp, $config->scheme);
         self::assertSame('guest', $config->user);
         self::assertSame('guest', $config->password);
-        self::assertSame('localhost', $config->host);
-        self::assertSame(5673, $config->port);
+        self::assertSame(['localhost:5673'], $config->urls);
         self::assertSame(60, $config->heartbeat);
         self::assertSame(0xFFFF, $config->channelMax);
         self::assertEquals(10, $config->connectionTimeout);
@@ -48,12 +46,22 @@ final class ConfigTest extends TestCase
         self::assertCount(0, $config->authMechanisms);
     }
 
+    public function testClusterUriParsed(): void
+    {
+        $config = Config::fromURI('amqp://guest:guest@localhost:5673,localhost:5674/test?channel_max=8');
+        self::assertSame(Scheme::amqp, $config->scheme);
+        self::assertSame('guest', $config->user);
+        self::assertSame('guest', $config->password);
+        self::assertSame(['localhost:5673', 'localhost:5674'], $config->urls);
+        self::assertSame('/test', $config->vhost);
+        self::assertSame(8, $config->channelMax);
+    }
+
     public function testUriParsedWithTLS(): void
     {
         $config = Config::fromURI('amqps://foo.bar/?certfile=/foo/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82/cert.pem&keyfile=/foo/%E4%BD%A0%E5%A5%BD/key.pem&cacertfile=C:%5Ccerts%5Cca.pem&server_name_indication=example.com');
         self::assertSame(Scheme::amqps, $config->scheme);
-        self::assertSame('foo.bar', $config->host);
-        self::assertSame(5672, $config->port);
+        self::assertSame(['foo.bar:5672'], $config->urls);
         self::assertSame('guest', $config->user);
         self::assertSame('guest', $config->password);
         self::assertSame('/', $config->vhost);
@@ -71,8 +79,7 @@ final class ConfigTest extends TestCase
     {
         $config = Config::fromURI('amqps://foo.bar/test?auth_mechanism=plain&auth_mechanism=amqplain&heartbeat=2&connection_timeout=20&channel_max=8&frame_max=10&tcp_nodelay=false');
         self::assertSame(Scheme::amqps, $config->scheme);
-        self::assertSame('foo.bar', $config->host);
-        self::assertSame(5672, $config->port);
+        self::assertSame(['foo.bar:5672'], $config->urls);
         self::assertSame('guest', $config->user);
         self::assertSame('guest', $config->password);
         self::assertSame('/test', $config->vhost);

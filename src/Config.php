@@ -13,6 +13,7 @@ use Thesis\Amqp\Internal\Protocol\Auth\Mechanism;
  */
 final class Config
 {
+    private const DEFAULT_URL = 'localhost:5672';
     private const DEFAULT_HOST = 'localhost';
     private const DEFAULT_PORT = 5672;
     private const DEFAULT_USERNAME = 'guest';
@@ -27,8 +28,7 @@ final class Config
     private array $sasl;
 
     /**
-     * @param non-empty-string $host
-     * @param positive-int $port
+     * @param non-empty-list<non-empty-string> $urls
      * @param non-empty-string $vhost
      * @param list<non-empty-string> $authMechanisms
      * @param non-negative-int $heartbeat
@@ -38,8 +38,7 @@ final class Config
      */
     public function __construct(
         public readonly Scheme $scheme = Scheme::amqp,
-        public readonly string $host = self::DEFAULT_HOST,
-        public readonly int $port = self::DEFAULT_PORT,
+        public readonly array $urls = [self::DEFAULT_URL],
         public readonly string $user = self::DEFAULT_USERNAME,
         public readonly string $password = self::DEFAULT_PASSWORD,
         public readonly string $vhost = self::DEFAULT_VHOST,
@@ -140,14 +139,15 @@ final class Config
             $tcpNoDelay = filter_var($query['tcp_nodelay'], FILTER_VALIDATE_BOOL);
         }
 
-        $host = self::DEFAULT_HOST;
-        if (isset($components['host']) && $components['host'] !== '') {
-            $host = $components['host'];
-        }
-
         $port = self::DEFAULT_PORT;
         if (isset($components['port']) && $components['port'] > 0) {
             $port = $components['port'];
+        }
+
+        $urls = [];
+        foreach (explode(',', $components['host'] ?? '') as $host) {
+            $hostport = explode(':', $host);
+            $urls[] = \sprintf('%s:%d', $hostport[0] ?: self::DEFAULT_HOST, (int) ($hostport[1] ?? $port));
         }
 
         $vhost = self::DEFAULT_VHOST;
@@ -167,8 +167,7 @@ final class Config
 
         return new self(
             scheme: Scheme::tryFrom($components['scheme'] ?? Scheme::amqp->value) ?: throw UriIsInvalid::invalidScheme($components['scheme'] ?? ''),
-            host: $host,
-            port: $port,
+            urls: $urls,
             user: $user,
             password: $password,
             vhost: $vhost,
@@ -188,8 +187,7 @@ final class Config
     /**
      * @param array{
      *     scheme?: AmqpScheme,
-     *     host?: non-empty-string,
-     *     port?: positive-int,
+     *     urls?: non-empty-list<non-empty-string>,
      *     user?: non-empty-string,
      *     password?: non-empty-string,
      *     vhost?: non-empty-string,
@@ -209,8 +207,7 @@ final class Config
     {
         return new self(
             scheme: isset($options['scheme']) ? Scheme::parse($options['scheme']) : Scheme::amqp,
-            host: $options['host'] ?? self::DEFAULT_HOST,
-            port: $options['port'] ?? self::DEFAULT_PORT,
+            urls: $options['urls'] ?? [self::DEFAULT_URL],
             user: $options['user'] ?? self::DEFAULT_USERNAME,
             password: $options['password'] ?? self::DEFAULT_PASSWORD,
             vhost: $options['vhost'] ?? self::DEFAULT_VHOST,
@@ -261,11 +258,17 @@ final class Config
     }
 
     /**
-     * @return non-empty-string
+     * @return iterable<non-empty-string>
      */
-    public function connectionDsn(): string
+    public function connectionUrls(): iterable
     {
-        return \sprintf('tcp://%s:%d', $this->host, $this->port);
+        foreach ($this->urls as $url) {
+            if (!str_starts_with($url, 'tcp://')) {
+                $url = "tcp://{$url}";
+            }
+
+            yield $url;
+        }
     }
 
     /**
