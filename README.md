@@ -490,7 +490,7 @@ $client->connect();
 
 $channel = $client->channel();
 $unconfirmed = $channel->publishBatch(
-    PublishBatch::default()
+    PublishBatch::empty()
         ->add(new Message('x'), routingKey: 'test'),
         ->add(new Message('y'), routingKey: 'test'),
         ->add(new Message('z'), routingKey: 'test'),

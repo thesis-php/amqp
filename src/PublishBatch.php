@@ -14,7 +14,7 @@ final class PublishBatch implements \IteratorAggregate
     /** @var list<array{Message, string, string, bool, bool}> */
     private array $messages = [];
 
-    public static function default(): self
+    public static function empty(): self
     {
         return new self();
     }
