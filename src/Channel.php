@@ -77,39 +77,37 @@ final class Channel
     }
 
     /**
-     * @return list<Message>
+     * @param non-empty-list<PublishMessage> $publishMessages
      * @throws \Throwable
      */
-    public function publishBatch(PublishBatch $batch): array
+    public function publishBatch(array $publishMessages): DeliveryConfirmation
     {
         /** @var list<Confirmation> $confirmations */
         $confirmations = [];
 
-        /** @var array<non-negative-int, Message> $messages */
+        /** @var array<non-negative-int, PublishMessage> $messages */
         $messages = [];
 
-        $this->connection->writeFrame((function () use ($batch, &$confirmations, &$messages): \Generator {
-            foreach ($batch as [$message, $exchange, $routingKey, $mandatory, $immediate]) {
-                yield from $this->doPublish($message, $exchange, $routingKey, $mandatory, $immediate);
+        $this->connection->writeFrame((function () use ($publishMessages, &$confirmations, &$messages): \Generator {
+            foreach ($publishMessages as $publishMessage) {
+                yield from $this->doPublish(
+                    $publishMessage->message,
+                    $publishMessage->exchange,
+                    $publishMessage->routingKey,
+                    $publishMessage->mandatory,
+                    $publishMessage->immediate,
+                );
 
                 if ($this->mode === ChannelMode::confirm) {
                     $confirmation = $this->confirms->newConfirmation();
 
                     $confirmations[] = $confirmation;
-                    $messages[$confirmation->deliveryTag] = $message;
+                    $messages[$confirmation->deliveryTag] = $publishMessage;
                 }
             }
         })());
 
-        $unconfirmed = [];
-
-        foreach (Confirmation::awaitAll($confirmations) as $deliveryTag => $publishResult) {
-            if ($publishResult !== PublishResult::Acked) {
-                $unconfirmed[] = $messages[$deliveryTag];
-            }
-        }
-
-        return $unconfirmed;
+        return new DeliveryConfirmation($messages, $confirmations);
     }
 
     /**

@@ -257,12 +257,16 @@ final class AmqpTest extends TestCase
 
         $channel->confirmSelect();
 
-        self::assertCount(0, $channel->publishBatch(
-            PublishBatch::empty()
-                ->add(new Message('1'), exchange: $exchange, routingKey: $routingKey)
-                ->add(new Message('2'), exchange: $exchange, routingKey: $routingKey)
-                ->add(new Message('3'), exchange: $exchange, routingKey: $routingKey),
-        ));
+        self::assertCount(
+            0,
+            $channel
+                ->publishBatch([
+                    new PublishMessage(new Message('1'), exchange: $exchange, routingKey: $routingKey),
+                    new PublishMessage(new Message('2'), exchange: $exchange, routingKey: $routingKey),
+                    new PublishMessage(new Message('3'), exchange: $exchange, routingKey: $routingKey),
+                ])
+                ->unconfirmed(),
+        );
 
         for ($i = 1; $i <= 3; ++$i) {
             $delivery = $channel->get($queue);

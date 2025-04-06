@@ -483,20 +483,21 @@ declare(strict_types=1);
 use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Message;
-use Thesis\Amqp\PublishBatch;
+use Thesis\Amqp\PublishMessage;
 
 $client = new Client(Config::default());
 $client->connect();
 
 $channel = $client->channel();
-$unconfirmed = $channel->publishBatch(
-    PublishBatch::empty()
-        ->add(new Message('x'), routingKey: 'test'),
-        ->add(new Message('y'), routingKey: 'test'),
-        ->add(new Message('z'), routingKey: 'test'),
-);
+$confirmation = $channel->publishBatch([
+    new PublishMessage(new Message('x'), routingKey: 'test'),
+    new PublishMessage(new Message('y'), routingKey: 'test'),
+    new PublishMessage(new Message('z'), routingKey: 'test'),
+]);
 
 // Only if $channel->confirmSelect() was called.
+$unconfirmed = $confirmation->unconfirmed();
+
 if (\count($unconfirmed) > 0) {
     // retry publish.
 }
