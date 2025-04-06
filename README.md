@@ -503,7 +503,9 @@ if (\count($unconfirmed) > 0) {
 }
 ```
 
-If `publisher confirms` is enabled, you will receive back a list of unconfirmed messages that you can try to publish again.
+You will receive back the `DeliveryConfirmation`, which allows you to deal with confirmations:
+- `DeliveryConfirmation::awaitAll` - await all confirmations or throw an `\LogicException`, if there are any unconfirmed messages.
+- `DeliveryConfirmation::unconfirmed` - await all confirmations and return only unconfirmed ones.
 
 #### get
 
