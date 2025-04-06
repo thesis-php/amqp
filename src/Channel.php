@@ -36,7 +36,7 @@ final class Channel
 
     private readonly ConfirmationListener $confirms;
 
-    private ChannelMode $mode = ChannelMode::regular;
+    private ChannelMode $mode = ChannelMode::Regular;
 
     private bool $isClosed = false;
 
@@ -92,7 +92,7 @@ final class Channel
             }
         })());
 
-        return $this->mode === ChannelMode::confirm ? $this->confirms->newConfirmation() : null;
+        return $this->mode === ChannelMode::Confirm ? $this->confirms->newConfirmation() : null;
     }
 
     /**
@@ -548,7 +548,7 @@ final class Channel
 
         $this->await(Frame\TxSelectOk::class);
 
-        $this->mode = ChannelMode::transactional;
+        $this->mode = ChannelMode::Transactional;
     }
 
     /**
@@ -598,7 +598,7 @@ final class Channel
             $this->await(Frame\ConfirmSelectOk::class);
         }
 
-        $this->mode = ChannelMode::confirm;
+        $this->mode = ChannelMode::Confirm;
         $this->confirms->listen();
     }
 
