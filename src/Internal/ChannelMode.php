@@ -9,17 +9,17 @@ namespace Thesis\Amqp\Internal;
  */
 enum ChannelMode
 {
-    case regular;
-    case transactional;
-    case confirm;
+    case Regular;
+    case Transactional;
+    case Confirm;
 
     public function transactional(): bool
     {
-        return $this === self::transactional;
+        return $this === self::Transactional;
     }
 
     public function confirming(): bool
     {
-        return $this === self::confirm;
+        return $this === self::Confirm;
     }
 }
