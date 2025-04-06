@@ -38,7 +38,7 @@ final class Channel
 
     private ChannelMode $mode = ChannelMode::regular;
 
-    private bool $isClosed = false;
+    private bool $closed = false;
 
     /**
      * @param non-negative-int $channelId
@@ -602,19 +602,24 @@ final class Channel
         $this->confirms->listen();
     }
 
+    public function isClosed(): bool
+    {
+        return $this->closed;
+    }
+
     /**
      * @param non-negative-int $replyCode
      * @throws \Throwable
      */
     public function close(int $replyCode = 200, string $replyText = ''): void
     {
-        if (!$this->isClosed) {
+        if (!$this->closed) {
             $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
 
             $this->await(Frame\ChannelCloseOk::class);
 
             $this->supervisor->stop();
-            $this->isClosed = true;
+            $this->closed = true;
         }
     }
 
@@ -632,6 +637,7 @@ final class Channel
     {
         $this->hooks->reject($this->channelId, $e);
         $this->hooks->unsubscribe($this->channelId);
+        $this->closed = true;
     }
 
     /**

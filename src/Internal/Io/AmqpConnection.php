@@ -31,7 +31,7 @@ final class AmqpConnection implements Writer
 
     private float $lastWrite = 0;
 
-    private bool $isClosed = false;
+    private bool $closed = false;
 
     public function __construct(Socket $socket)
     {
@@ -96,7 +96,7 @@ final class AmqpConnection implements Writer
     public function ioLoop(Hooks $hooks): void
     {
         $reader = $this->reader;
-        $isClosed = &$this->isClosed;
+        $isClosed = &$this->closed;
 
         EventLoop::queue(static function () use ($reader, &$isClosed, $hooks): void {
             try {
@@ -139,6 +139,6 @@ final class AmqpConnection implements Writer
             EventLoop::cancel($this->heartbeatId);
         }
 
-        $this->isClosed = true;
+        $this->closed = true;
     }
 }
