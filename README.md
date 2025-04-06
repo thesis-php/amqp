@@ -62,7 +62,7 @@ use Thesis\Amqp\Config;
 $config = Config::fromURI('amqp://guest:guest@localhost:5672/');
 ```
 
-Multiple addresses is supported. The client will connect to the first available amqp server host.
+Multiple addresses are supported. The client will connect to the first available amqp server host.
 
 ```php
 <?php
