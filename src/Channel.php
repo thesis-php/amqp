@@ -21,6 +21,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 
 /**
  * @api
+ * @template TConfirmation of ?Confirmation = null
  */
 final class Channel
 {
@@ -60,6 +61,7 @@ final class Channel
     }
 
     /**
+     * @return TConfirmation
      * @throws \Throwable
      */
     public function publish(
@@ -580,6 +582,7 @@ final class Channel
     }
 
     /**
+     * @phpstan-self-out self<Confirmation>
      * @throws \Throwable
      */
     public function confirmSelect(bool $noWait = false): void
