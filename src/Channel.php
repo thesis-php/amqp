@@ -73,7 +73,7 @@ final class Channel
             $this->doPublish($message, $exchange, $routingKey, $mandatory, $immediate),
         );
 
-        return $this->mode === ChannelMode::confirm ? $this->confirms->newConfirmation() : null;
+        return $this->mode === ChannelMode::Confirm ? $this->confirms->newConfirmation() : null;
     }
 
     /**
@@ -98,7 +98,7 @@ final class Channel
                     $publishMessage->immediate,
                 );
 
-                if ($this->mode === ChannelMode::confirm) {
+                if ($this->mode === ChannelMode::Confirm) {
                     $confirmation = $this->confirms->newConfirmation();
 
                     $confirmations[] = $confirmation;
