@@ -113,7 +113,7 @@ final class Channel
     /**
      * @throws \Throwable
      */
-    public function get(string $queue = '', bool $noAck = false): ?Delivery
+    public function get(string $queue = '', bool $noAck = false): ?DeliveryMessage
     {
         static $permit = true;
         if (!$permit) {
@@ -136,7 +136,7 @@ final class Channel
     /**
      * @throws \Throwable
      */
-    public function ack(Delivery $delivery, bool $multiple = false): void
+    public function ack(DeliveryMessage $delivery, bool $multiple = false): void
     {
         $this->connection->writeFrame(Protocol\Method::basicAck(
             channelId: $this->channelId,
@@ -148,7 +148,7 @@ final class Channel
     /**
      * @throws \Throwable
      */
-    public function nack(Delivery $delivery, bool $multiple = false, bool $requeue = true): void
+    public function nack(DeliveryMessage $delivery, bool $multiple = false, bool $requeue = true): void
     {
         $this->connection->writeFrame(Protocol\Method::basicNack(
             channelId: $this->channelId,
@@ -161,7 +161,7 @@ final class Channel
     /**
      * @throws \Throwable
      */
-    public function reject(Delivery $delivery, bool $requeue = true): void
+    public function reject(DeliveryMessage $delivery, bool $requeue = true): void
     {
         $this->connection->writeFrame(Protocol\Method::basicReject(
             channelId: $this->channelId,
@@ -201,7 +201,7 @@ final class Channel
     }
 
     /**
-     * @param callable(Delivery, self): void $callback
+     * @param callable(DeliveryMessage, self): void $callback
      * @param array<string, mixed> $arguments
      * @return non-empty-string Consumer tag
      * @throws \Throwable

@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Thesis\Amqp\Internal\Delivery;
 
 use Thesis\Amqp\Channel;
-use Thesis\Amqp\Delivery;
+use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Internal\Hooks;
 use Thesis\Amqp\Internal\Protocol\Frame;
+use Thesis\Amqp\Message;
 
 /**
  * @internal
- * @phpstan-type ConsumeListener = callable(Delivery): void
- * @phpstan-type ReturnListener = callable(Delivery): void
- * @phpstan-type GetListener = callable(null|Delivery): void
+ * @phpstan-type ConsumeListener = callable(DeliveryMessage): void
+ * @phpstan-type ReturnListener = callable(DeliveryMessage): void
+ * @phpstan-type GetListener = callable(null|DeliveryMessage): void
  */
 final class DeliverySupervisor
 {
@@ -175,29 +176,31 @@ final class DeliverySupervisor
         // You cannot call ack/nack/reject on a returned message.
         $noAction = static function (): void {};
 
-        $delivery = new Delivery(
+        $delivery = new DeliveryMessage(
             ack: $this->return !== null ? $noAction : $this->channel->ack(...),
             nack: $this->return !== null ? $noAction : $this->channel->nack(...),
             reject: $this->return !== null ? $noAction : $this->channel->reject(...),
-            body: $this->message,
+            message: new Message(
+                body: $this->message,
+                headers: $this->header->properties->headers,
+                contentType: $this->header->properties->contentType,
+                contentEncoding: $this->header->properties->contentEncoding,
+                deliveryMode: $this->header->properties->deliveryMode,
+                priority: $this->header->properties->priority,
+                correlationId: $this->header->properties->correlationId,
+                replyTo: $this->header->properties->replyTo,
+                expiration: $this->header->properties->expiration,
+                messageId: $this->header->properties->messageId,
+                timestamp: $this->header->properties->timestamp,
+                type: $this->header->properties->type,
+                userId: $this->header->properties->userId,
+                appId: $this->header->properties->appId,
+            ),
             exchange: $this->delivery->exchange ?? $this->get->exchange ?? $this->return->exchange ?? '',
             routingKey: $this->delivery->routingKey ?? $this->get->routingKey ?? $this->return->routingKey ?? '',
-            headers: $this->header->properties->headers,
             deliveryTag: $this->delivery->deliveryTag ?? $this->get->deliveryTag ?? 0,
             consumerTag: $this->delivery->consumerTag ?? '',
             redelivered: $this->delivery->redelivered ?? $this->get->redelivered ?? false,
-            contentType: $this->header->properties->contentType,
-            contentEncoding: $this->header->properties->contentEncoding,
-            deliveryMode: $this->header->properties->deliveryMode,
-            priority: $this->header->properties->priority,
-            correlationId: $this->header->properties->correlationId,
-            replyTo: $this->header->properties->replyTo,
-            expiration: $this->header->properties->expiration,
-            messageId: $this->header->properties->messageId,
-            timestamp: $this->header->properties->timestamp,
-            type: $this->header->properties->type,
-            userId: $this->header->properties->userId,
-            appId: $this->header->properties->appId,
             returned: $this->return !== null,
         );
 

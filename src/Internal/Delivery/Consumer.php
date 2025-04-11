@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Thesis\Amqp\Internal\Delivery;
 
 use Thesis\Amqp\Channel;
-use Thesis\Amqp\Delivery;
+use Thesis\Amqp\DeliveryMessage;
 
 /**
  * @internal
- * @phpstan-type Listener = callable(Delivery, Channel): void
+ * @phpstan-type Listener = callable(DeliveryMessage, Channel): void
  */
 final class Consumer
 {
@@ -47,7 +47,7 @@ final class Consumer
 
     private function run(): void
     {
-        $this->supervisor->addConsumeListener(function (Delivery $delivery): void {
+        $this->supervisor->addConsumeListener(function (DeliveryMessage $delivery): void {
             $consumer = $this->consumers[$delivery->consumerTag] ?? null;
             if ($consumer !== null) {
                 $consumer($delivery, $this->channel);

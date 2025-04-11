@@ -8,7 +8,7 @@ use Amp\Pipeline;
 
 /**
  * @api
- * @template-implements \IteratorAggregate<array-key, Delivery>
+ * @template-implements \IteratorAggregate<array-key, DeliveryMessage>
  */
 final class Iterator implements \IteratorAggregate
 {
@@ -19,18 +19,18 @@ final class Iterator implements \IteratorAggregate
      */
     public static function buffered(string $consumerTag, Channel $channel, int $size): self
     {
-        /** @var Pipeline\Queue<Delivery> $queue */
+        /** @var Pipeline\Queue<DeliveryMessage> $queue */
         $queue = new Pipeline\Queue(bufferSize: $size);
 
         return new self($queue, $channel, $consumerTag);
     }
 
-    /** @var Pipeline\ConcurrentIterator<Delivery> */
+    /** @var Pipeline\ConcurrentIterator<DeliveryMessage> */
     private readonly Pipeline\ConcurrentIterator $iterator;
 
     /**
      * @internal
-     * @param Pipeline\Queue<Delivery> $queue
+     * @param Pipeline\Queue<DeliveryMessage> $queue
      * @param non-empty-string $consumerTag
      */
     private function __construct(
@@ -44,7 +44,7 @@ final class Iterator implements \IteratorAggregate
     /**
      * @internal
      */
-    public function push(Delivery $delivery): void
+    public function push(DeliveryMessage $delivery): void
     {
         $this->queue->push($delivery);
     }

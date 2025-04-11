@@ -535,10 +535,7 @@ $client->connect();
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events', noAck: true);
 
-var_dump($delivery?->body);
-var_dump($delivery?->messageId);
-var_dump($delivery?->correlationId);
-var_dump($delivery?->contentEncoding);
+var_dump($delivery?->message);
 ```
 
 #### ack
@@ -673,7 +670,7 @@ declare(strict_types=1);
 
 use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
-use Thesis\Amqp\Delivery;
+use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Channel;
 
 $client = new Client(Config::default());
@@ -682,8 +679,8 @@ $client->connect();
 $channel = $client->channel();
 
 $channel->qos(prefetchCount: 1);
-$consumerTag = $channel->consume(static function (Delivery $delivery, Channel $_): void {
-    var_dump($delivery->body);
+$consumerTag = $channel->consume(static function (DeliveryMessage $delivery, Channel $_): void {
+    var_dump($delivery->message);
     $delivery->ack();    
 }, queue: 'service.a.events');
 
@@ -717,7 +714,7 @@ Amp\async(static function () use ($deliveries): void {
 });
 
 foreach ($deliveries as $delivery) {
-    var_dump($delivery->body);
+    var_dump($delivery->message);
     $delivery->ack();
 }
 
@@ -753,7 +750,7 @@ Amp\async(static function () use ($deliveries): void {
 
 try {
     foreach ($deliveries as $delivery) {
-        var_dump($delivery->body);
+        var_dump($delivery->message);
         $delivery->ack();
     }
 } catch (\Throwable $e) {
@@ -926,7 +923,7 @@ $channel = $client->channel();
 
 Amp\async(static function () use ($channel): void {
     foreach ($channel->returns as $return) {
-        var_dump("message '{$return->body}' was return from {$return->exchange}:{$return->routingKey}");
+        var_dump("message '{$return->message}' was returned from {$return->exchange}:{$return->routingKey}");
     }
 });
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Amqp\Internal\Delivery;
 
 use Amp\Pipeline;
-use Thesis\Amqp\Delivery;
+use Thesis\Amqp\DeliveryMessage;
 
 /**
  * @internal
@@ -20,7 +20,7 @@ final class Receiver
         return $receiver;
     }
 
-    public function receive(): ?Delivery
+    public function receive(): ?DeliveryMessage
     {
         if (!$this->iterator->continue()) {
             return null;
@@ -29,16 +29,16 @@ final class Receiver
         return $this->iterator->getValue();
     }
 
-    /** @var Pipeline\ConcurrentIterator<null|Delivery> */
+    /** @var Pipeline\ConcurrentIterator<null|DeliveryMessage> */
     private Pipeline\ConcurrentIterator $iterator;
 
-    /** @var Pipeline\Queue<null|Delivery> */
+    /** @var Pipeline\Queue<null|DeliveryMessage> */
     private Pipeline\Queue $queue;
 
     private function __construct(
         private readonly DeliverySupervisor $supervisor,
     ) {
-        /** @var Pipeline\Queue<null|Delivery> $queue */
+        /** @var Pipeline\Queue<null|DeliveryMessage> $queue */
         $queue = new Pipeline\Queue(bufferSize: 1);
 
         $this->queue = $queue;

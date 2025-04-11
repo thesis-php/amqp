@@ -227,8 +227,8 @@ final class AmqpTest extends TestCase
 
         $delivery = $channel->get($queue);
         self::assertNotNull($delivery);
-        self::assertSame($message, $delivery->body);
-        self::assertSame($headers, $delivery->headers);
+        self::assertSame($message, $delivery->message->body);
+        self::assertSame($headers, $delivery->message->headers);
         self::assertSame($exchange, $delivery->exchange);
         self::assertSame($routingKey, $delivery->routingKey);
 
@@ -271,7 +271,7 @@ final class AmqpTest extends TestCase
         for ($i = 1; $i <= 3; ++$i) {
             $delivery = $channel->get($queue);
             self::assertNotNull($delivery);
-            self::assertSame("{$i}", $delivery->body);
+            self::assertSame("{$i}", $delivery->message->body);
             self::assertSame($exchange, $delivery->exchange);
             self::assertSame($routingKey, $delivery->routingKey);
 
@@ -310,7 +310,7 @@ final class AmqpTest extends TestCase
         $consumedMessages = 0;
 
         $channel->qos(prefetchCount: $messageCount);
-        $channel->consume(static function (Delivery $delivery) use (&$consumedMessages, $messageCount, $deferred): void {
+        $channel->consume(static function (DeliveryMessage $delivery) use (&$consumedMessages, $messageCount, $deferred): void {
             if (++$consumedMessages === $messageCount) {
                 $delivery->ack(multiple: true);
                 $deferred->complete();
@@ -351,7 +351,7 @@ final class AmqpTest extends TestCase
         $consumedMessages = 0;
 
         $channel->qos(prefetchCount: $messageCount * 2);
-        $channel->consume(static function (Delivery $delivery) use (&$consumedMessages, $messageCount, $deferred): void {
+        $channel->consume(static function (DeliveryMessage $delivery) use (&$consumedMessages, $messageCount, $deferred): void {
             ++$consumedMessages;
 
             if ($consumedMessages === $messageCount) {
@@ -390,8 +390,8 @@ final class AmqpTest extends TestCase
 
         $delivery = $channel->get($queue);
         self::assertNotNull($delivery);
-        self::assertSame($message, $delivery->body);
-        self::assertSame($headers, $delivery->headers);
+        self::assertSame($message, $delivery->message->body);
+        self::assertSame($headers, $delivery->message->headers);
 
         $delivery->nack();
         delay(0.1);
@@ -423,8 +423,8 @@ final class AmqpTest extends TestCase
 
         $delivery = $channel->get($queue);
         self::assertNotNull($delivery);
-        self::assertSame($message, $delivery->body);
-        self::assertSame($headers, $delivery->headers);
+        self::assertSame($message, $delivery->message->body);
+        self::assertSame($headers, $delivery->message->headers);
 
         $delivery->reject();
         delay(0.1);
@@ -483,7 +483,7 @@ final class AmqpTest extends TestCase
         self::assertSame(1, $channel->queueDeclare($queue, passive: true)->consumers);
 
         foreach ($iterator as $delivery) {
-            $consumedMessages[] = $delivery->body;
+            $consumedMessages[] = $delivery->message->body;
             $delivery->ack();
             if (\count($consumedMessages) === 3) {
                 $iterator->complete();
@@ -519,7 +519,7 @@ final class AmqpTest extends TestCase
         self::expectException(\Exception::class);
         self::expectExceptionMessage('cancel iterator');
         foreach ($iterator as $delivery) {
-            $consumedMessages[] = $delivery->body;
+            $consumedMessages[] = $delivery->message->body;
             $delivery->ack();
             if (\count($consumedMessages) === 3) {
                 $iterator->cancel(new \Exception('cancel iterator'));
@@ -561,8 +561,8 @@ final class AmqpTest extends TestCase
         $consumedMessages = [];
 
         $channel->qos(prefetchCount: $messageCount);
-        $channel->consume(static function (Delivery $delivery) use (&$consumedMessages, $messageCount, $deferred): void {
-            $consumedMessages[$delivery->exchange][] = $delivery->body;
+        $channel->consume(static function (DeliveryMessage $delivery) use (&$consumedMessages, $messageCount, $deferred): void {
+            $consumedMessages[$delivery->exchange][] = $delivery->message->body;
             $delivery->ack();
             if (\count($consumedMessages[$delivery->exchange]) === $messageCount) {
                 $deferred->complete($consumedMessages);
@@ -626,7 +626,7 @@ final class AmqpTest extends TestCase
     {
         $channel = $this->client->channel();
 
-        /** @var DeferredFuture<Delivery> $deferred */
+        /** @var DeferredFuture<DeliveryMessage> $deferred */
         $deferred = new DeferredFuture();
 
         $channel->publish(new Message('x'), routingKey: 'not_exists', mandatory: true);
@@ -637,7 +637,7 @@ final class AmqpTest extends TestCase
         }
 
         $delivery = $deferred->getFuture()->await();
-        self::assertSame('x', $delivery->body);
+        self::assertSame('x', $delivery->message->body);
         self::assertSame('not_exists', $delivery->routingKey);
 
         $channel->close();
@@ -681,40 +681,28 @@ final class AmqpTest extends TestCase
         $channel = $this->client->channel();
         $channel->queueDelete($queue);
         $channel->queueDeclare($queue, autoDelete: true);
-
-        $channel->publish(
-            new Message(
-                'x',
-                headers: $headers,
-                contentType: $contentType,
-                contentEncoding: $contentEncoding,
-                deliveryMode: $deliveryMode,
-                priority: $priority,
-                correlationId: $correlationId,
-                expiration: $expiration,
-                messageId: $messageId,
-                timestamp: $timestamp,
-                type: $type,
-                userId: $userId,
-                appId: $appId,
-            ),
-            routingKey: $queue,
+        $message = new Message(
+            'x',
+            headers: $headers,
+            contentType: $contentType,
+            contentEncoding: $contentEncoding,
+            deliveryMode: $deliveryMode,
+            priority: $priority,
+            correlationId: $correlationId,
+            expiration: $expiration,
+            messageId: $messageId,
+            timestamp: $timestamp,
+            type: $type,
+            userId: $userId,
+            appId: $appId,
         );
+
+        $channel->publish($message, routingKey: $queue);
 
         $delivery = $channel->get($queue);
         self::assertNotNull($delivery);
         $delivery->ack();
-        self::assertSame($contentType, $delivery->contentType);
-        self::assertSame($contentEncoding, $delivery->contentEncoding);
-        self::assertSame($deliveryMode, $delivery->deliveryMode);
-        self::assertSame($priority, $delivery->priority);
-        self::assertSame($correlationId, $delivery->correlationId);
-        self::assertSame($expiration, $delivery->expiration);
-        self::assertSame($messageId, $delivery->messageId);
-        self::assertEquals($timestamp, $delivery->timestamp);
-        self::assertSame($type, $delivery->type);
-        self::assertSame($userId, $delivery->userId);
-        self::assertSame($appId, $delivery->appId);
+        self::assertEquals($message, $delivery->message);
 
         $channel->close();
     }
@@ -733,7 +721,7 @@ final class AmqpTest extends TestCase
         $channel->publish(new Message(str_repeat('x', $messageSize)), routingKey: $queue);
 
         $delivery = $channel->get($queue);
-        self::assertSame($messageSize, \strlen($delivery->body ?? ''));
+        self::assertSame($messageSize, \strlen($delivery->message->body ?? ''));
 
         $delivery?->ack();
 
@@ -754,7 +742,7 @@ final class AmqpTest extends TestCase
 
         $delivery = $channel->get($queue, noAck: true);
         self::assertNotNull($delivery);
-        self::assertEmpty($delivery->body);
+        self::assertEmpty($delivery->message->body);
 
         $channel->close();
     }
@@ -775,7 +763,7 @@ final class AmqpTest extends TestCase
         $channel->txCommit();
 
         $delivery = $channel->get($queue, true);
-        self::assertSame('x', $delivery?->body);
+        self::assertSame('x', $delivery?->message->body);
 
         $channel->publish(new Message('xx'), routingKey: $queue);
         $channel->txRollback();
@@ -801,7 +789,7 @@ final class AmqpTest extends TestCase
         });
 
         $delivery = $channel->get($queue, true);
-        self::assertSame('x', $delivery?->body);
+        self::assertSame('x', $delivery?->message->body);
 
         self::expectException(\Exception::class);
         self::expectExceptionMessage('rollback');
@@ -908,14 +896,14 @@ final class AmqpTest extends TestCase
 
         $delivery = $channel->get($queue);
         self::assertNotNull($delivery);
-        self::assertSame('x', $delivery->body);
+        self::assertSame('x', $delivery->message->body);
         self::assertFalse($delivery->redelivered);
 
         $channel->recover(true);
 
         $delivery = $channel->get($queue);
         self::assertNotNull($delivery);
-        self::assertSame('x', $delivery->body);
+        self::assertSame('x', $delivery->message->body);
         self::assertTrue($delivery->redelivered);
         $delivery->ack();
 

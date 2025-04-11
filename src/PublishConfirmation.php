@@ -41,7 +41,7 @@ final class PublishConfirmation
         return Future::iterate($futures, $cancellation);
     }
 
-    private PublishResult $result;
+    private PublishResult $result = PublishResult::Waiting;
 
     /**
      * @param non-negative-int $deliveryTag
@@ -53,7 +53,6 @@ final class PublishConfirmation
         private readonly Future $future,
         private readonly \Closure $cancel,
     ) {
-        $this->result = PublishResult::Waiting;
         $this->future->map(function (PublishResult $result): void {
             $this->result = $result;
         });
