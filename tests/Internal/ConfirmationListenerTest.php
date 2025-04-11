@@ -7,10 +7,10 @@ namespace Thesis\Amqp\Internal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use Thesis\Amqp\Confirmation;
 use Thesis\Amqp\Internal\Protocol\Frame\BasicAck;
 use Thesis\Amqp\Internal\Protocol\Frame\BasicNack;
 use Thesis\Amqp\Internal\Protocol\Request;
+use Thesis\Amqp\PublishConfirmation;
 use Thesis\Amqp\PublishResult;
 
 #[CoversClass(ConfirmationListener::class)]
@@ -83,7 +83,7 @@ final class ConfirmationListenerTest extends TestCase
         $hooks->emit(new Request(1, new BasicAck(1, false)));
         $hooks->emit(new Request(1, new BasicAck(2, false)));
 
-        $acks = Confirmation::awaitAll([$confirmation1, $confirmation2]);
+        $acks = PublishConfirmation::awaitAll([$confirmation1, $confirmation2]);
         self::assertSame([1 => PublishResult::Acked, 2 => PublishResult::Acked], iterator_to_array($acks));
     }
 }

@@ -68,7 +68,7 @@ final class Channel
         string $routingKey = '',
         bool $mandatory = false,
         bool $immediate = false,
-    ): ?Confirmation {
+    ): ?PublishConfirmation {
         $this->connection->writeFrame(
             $this->doPublish($message, $exchange, $routingKey, $mandatory, $immediate),
         );
@@ -80,9 +80,9 @@ final class Channel
      * @param non-empty-list<PublishMessage> $publishMessages
      * @throws \Throwable
      */
-    public function publishBatch(array $publishMessages): DeliveryConfirmation
+    public function publishBatch(array $publishMessages): PublishBatchConfirmation
     {
-        /** @var list<Confirmation> $confirmations */
+        /** @var list<PublishConfirmation> $confirmations */
         $confirmations = [];
 
         /** @var array<non-negative-int, PublishMessage> $messages */
@@ -107,7 +107,7 @@ final class Channel
             }
         })());
 
-        return new DeliveryConfirmation($messages, $confirmations);
+        return new PublishBatchConfirmation($messages, $confirmations);
     }
 
     /**

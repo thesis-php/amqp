@@ -10,7 +10,7 @@ use Amp\Future;
 /**
  * @api
  */
-final class Confirmation
+final class PublishConfirmation
 {
     /**
      * @param iterable<self> $confirmations

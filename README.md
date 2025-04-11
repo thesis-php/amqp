@@ -503,9 +503,9 @@ if (\count($unconfirmed) > 0) {
 }
 ```
 
-You will receive back the `DeliveryConfirmation`, which allows you to deal with confirmations:
-- `DeliveryConfirmation::awaitAll` - await all confirmations or throw an `\LogicException`, if there are any unconfirmed messages.
-- `DeliveryConfirmation::unconfirmed` - await all confirmations and return only unconfirmed ones.
+You will receive back the `PublishBatchConfirmation`, which allows you to deal with confirmations:
+- `PublishBatchConfirmation::awaitAll` - await all confirmations or throw an `\LogicException`, if there are any unconfirmed messages.
+- `PublishBatchConfirmation::unconfirmed` - await all confirmations and return only unconfirmed ones.
 
 #### get
 
@@ -832,7 +832,7 @@ $client->disconnect();
 #### confirms
 
 There are notable changes here compared to other libraries. Instead of a callback api through which you could handle confirmations,
-you get a `Confirmation` object that can be waited on in non-blocking mode via `await`.
+you get a `PublishConfirmation` object that can be waited on in non-blocking mode via `await`.
 
 ```php
 <?php
@@ -857,7 +857,7 @@ var_dump($confirmation?->await());
 $client->disconnect();
 ```
 
-The `Confirmation::await` will return `PublishResult` enum that can be in one of the `Acked, Nacked, Canceled, Waiting` states.
+The `PublishConfirmation::await` will return `PublishResult` enum that can be in one of the `Acked, Nacked, Canceled, Waiting` states.
 
 Since confirmations can return in batches, there is no need to wait for each confirmation in turn. Instead, you can publish many messages and wait for a confirmation at the end.
 If you are lucky, the amqp server will return multiple confirmations, or even one for the entire batches.
@@ -868,7 +868,7 @@ If you are lucky, the amqp server will return multiple confirmations, or even on
 declare(strict_types=1);
 
 use Thesis\Amqp\Client;
-use Thesis\Amqp\Confirmation;
+use Thesis\Amqp\PublishConfirmation;
 use Thesis\Amqp\Message;
 use Thesis\Amqp\Config;
 
@@ -888,7 +888,7 @@ for ($i = 0; $i < 100; ++$i) {
     $confirmations[] = $confirmation;
 }
 
-Confirmation::awaitAll($confirmations);
+PublishConfirmation::awaitAll($confirmations);
 
 $client->disconnect();
 ```

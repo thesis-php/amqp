@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Thesis\Amqp\Internal;
 
 use Amp\DeferredFuture;
-use Thesis\Amqp\Confirmation;
 use Thesis\Amqp\Internal\Protocol\Frame\BasicAck;
 use Thesis\Amqp\Internal\Protocol\Frame\BasicNack;
+use Thesis\Amqp\PublishConfirmation;
 use Thesis\Amqp\PublishResult;
 
 /**
@@ -40,7 +40,7 @@ final class ConfirmationListener implements \Countable
         $this->hooks->subscribe($this->channelId, BasicNack::class, $this->confirm(PublishResult::Nacked));
     }
 
-    public function newConfirmation(): Confirmation
+    public function newConfirmation(): PublishConfirmation
     {
         $deliveryTag = ++$this->deliveryTag;
 
@@ -48,7 +48,7 @@ final class ConfirmationListener implements \Countable
         $deferred = new DeferredFuture();
         $this->confirms[$deliveryTag] = $deferred;
 
-        return new Confirmation($deliveryTag, $deferred->getFuture(), function () use ($deliveryTag, $deferred): void {
+        return new PublishConfirmation($deliveryTag, $deferred->getFuture(), function () use ($deliveryTag, $deferred): void {
             unset($this->confirms[$deliveryTag]);
             $deferred->complete(PublishResult::Canceled);
         });
