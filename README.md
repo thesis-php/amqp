@@ -923,7 +923,7 @@ $channel = $client->channel();
 
 Amp\async(static function () use ($channel): void {
     foreach ($channel->returns as $return) {
-        var_dump("message '{$return->message}' was returned from {$return->exchange}:{$return->routingKey}");
+        var_dump("message '{$return->message->body}' was returned from {$return->exchange}:{$return->routingKey}");
     }
 });
 
