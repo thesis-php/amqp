@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp;
 
+use Amp\Future;
+use function Amp\async;
+
 /**
  * @api
  * @phpstan-type Ack = \Closure(DeliveryMessage, bool): void
@@ -12,6 +15,11 @@ namespace Thesis\Amqp;
  */
 final class DeliveryMessage
 {
+    /** @var ?Future<void> */
+    private ?Future $processedFuture = null;
+
+    private bool $processed = false;
+
     /**
      * @param Ack $ack
      * @param Nack $nack
@@ -33,16 +41,38 @@ final class DeliveryMessage
 
     public function ack(bool $multiple = false): void
     {
-        ($this->ack)($this, $multiple);
+        $this->process(fn() => ($this->ack)($this, $multiple));
     }
 
     public function nack(bool $multiple = false, bool $requeue = true): void
     {
-        ($this->nack)($this, $multiple, $requeue);
+        $this->process(fn() => ($this->nack)($this, $multiple, $requeue));
     }
 
     public function reject(bool $requeue = true): void
     {
-        ($this->reject)($this, $requeue);
+        $this->process(fn() => ($this->reject)($this, $requeue));
+    }
+
+    /**
+     * @param \Closure(): void $hook
+     */
+    private function process(\Closure $hook): void
+    {
+        $this->processedFuture?->await();
+
+        if (!$this->processed) {
+            try {
+                /** @var Future<void> $future */
+                $future = async($hook);
+                $this->processedFuture = $future;
+
+                $this->processedFuture->await();
+            } finally {
+                $this->processedFuture = null;
+            }
+
+            $this->processed = true;
+        }
     }
 }

@@ -35,6 +35,7 @@ composer require thesis/amqp
   - [ack](#ack)
   - [nack](#nack)
   - [reject](#reject)
+  - [ack, nack, reject safety](#ack-nack-reject-safety)
   - [consume](#consume)
   - [consume iterator](#consume-iterator)
   - [tx](#tx)
@@ -562,6 +563,8 @@ if ($delivery !== null) {
 }
 ```
 
+It is **safe** to call `ack` many times.
+
 #### nack
 
 `nack` can be called on a `Delivery` object.
@@ -600,6 +603,7 @@ if ($delivery !== null) {
 }
 ```
 
+It is **safe** to call `nack` many times.
 
 #### reject
 
@@ -638,6 +642,44 @@ if ($delivery !== null) {
     $channel->reject($delivery, requeue: false);
 }
 ```
+
+It is **safe** to call `reject` many times.
+
+#### ack, nack, reject safety
+
+It is safe to call `nack/reject` after `ack` or competitively. Operations will be ordered and processed only once.
+For example, you want to call `nack` on any error and `ack` only on successful cases. Then you can write the code as follows:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Config;
+use Thesis\Amqp\Client;
+use Thesis\Amqp\DeliveryMessage;
+use Thesis\Amqp\Channel;
+
+$client = new Client(Config::default());
+
+$channel = $client->channel();
+
+$handler = function (DeliveryMessage $delivery) use ($httpclient): void {
+    // handle the delivery with an \Exception
+    $delivery->nack();
+};
+
+$delivery = $channel->get('test');
+\assert($delivery !== null);
+
+try {
+    $handler($delivery);
+} finally {
+    $delivery->ack();
+}
+```
+
+Here `ack` in `finally` block will only be sent if neither `nack`, `reject`, nor `ack` in the `$handler` is called.
 
 #### consume
 
