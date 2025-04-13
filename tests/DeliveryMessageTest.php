@@ -7,6 +7,8 @@ namespace Thesis\Amqp;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use function Amp\async;
+use function Amp\Future\awaitAll;
 
 #[CoversClass(DeliveryMessage::class)]
 final class DeliveryMessageTest extends TestCase
@@ -37,9 +39,13 @@ final class DeliveryMessageTest extends TestCase
             'reject' => $delivery->reject(...),
         };
 
+        $futures = [];
+
         for ($i = 0; $i < 10; ++$i) {
-            $call();
+            $futures[] = async($call);
         }
+
+        awaitAll($futures);
 
         self::assertSame(1, $count);
     }
