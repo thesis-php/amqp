@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Amqp;
 
 use Amp\Cancellation;
-use Amp\CancelledException;
+use Amp\Future;
 use Amp\NullCancellation;
 use Amp\Socket;
 use Thesis\Amqp\Exception\ConnectionNotAvailable;
@@ -15,6 +15,7 @@ use Thesis\Amqp\Internal\Properties;
 use Thesis\Amqp\Internal\Protocol;
 use Thesis\Amqp\Internal\Protocol\Auth;
 use Thesis\Amqp\Internal\Protocol\Frame;
+use function Amp\async;
 
 /**
  * @api
@@ -22,6 +23,9 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 final class Client
 {
     private ?AmqpConnection $connection = null;
+
+    /** @var ?Future<void> */
+    private ?Future $connectionFuture = null;
 
     /** @var non-negative-int */
     private int $channelId = 1;
@@ -40,63 +44,29 @@ final class Client
     }
 
     /**
-     * @throws Socket\ConnectException
-     * @throws CancelledException
      * @throws \Throwable
      */
     public function connect(): void
     {
+        $this->connectionFuture?->await();
+
         if ($this->connection !== null) {
             return;
         }
 
-        $this->connection = $this->createConnection();
+        /** @var Future<void> $future */
+        $future = async($this->doConnect(...));
+        $this->connectionFuture = $future;
 
-        $start = $this->connection->rpc(Frame\ProtocolHeader::frame, Frame\ConnectionStart::class);
+        try {
+            $this->connectionFuture->await();
+        } catch (\Throwable $e) {
+            $this->connection = null;
 
-        $tune = $this->connection->rpc(
-            Protocol\Method::connectionStartOk($this->properties->toArray(), Auth\Mechanism::select(
-                $this->config->sasl(),
-                $start->mechanisms,
-            )),
-            Frame\ConnectionTune::class,
-        );
-
-        [$heartbeat, $channelMax, $frameMax] = [
-            $this->config->heartbeat($tune->heartbeat),
-            $this->config->channelMax($tune->channelMax),
-            $this->config->frameMax($tune->frameMax),
-        ];
-
-        $this->connection->rpc(
-            Protocol\Method::connectionTuneOk($channelMax, $frameMax, $heartbeat),
-        );
-
-        $this->properties->tune($channelMax, $frameMax);
-
-        if ($heartbeat > 0) {
-            $this->connection->heartbeat($heartbeat);
+            throw $e;
+        } finally {
+            $this->connectionFuture = null;
         }
-
-        $this->connection->rpc(
-            Protocol\Method::connectionOpen($this->config->vhost),
-            Frame\ConnectionOpenOk::class,
-        );
-
-        $this->connection->ioLoop($this->hooks);
-
-        $this->hooks->oneshot(0, Frame\ConnectionClose::class)->map(function (Frame\ConnectionClose $close): void {
-            $this->connection()->writeFrame(Protocol\Method::connectionCloseOk());
-            $this->connection()->close();
-
-            $error = Exception\ConnectionWasClosed::byServer($close->replyCode, $close->replyText);
-
-            foreach ($this->channels as $channel) {
-                $channel->abandon($error);
-            }
-
-            $this->channels = [];
-        });
     }
 
     /**
@@ -124,6 +94,8 @@ final class Client
      */
     public function channel(Cancellation $cancellation = new NullCancellation()): Channel
     {
+        $this->connect();
+
         $channelId = $this->allocateChannelId();
         $this->openChannel($channelId, $cancellation);
 
@@ -206,6 +178,58 @@ final class Client
     private function connection(): AmqpConnection
     {
         return $this->connection ?: throw new Exception\ConnectionIsClosed();
+    }
+
+    private function doConnect(): void
+    {
+        $this->connection = $this->createConnection();
+
+        $start = $this->connection->rpc(Frame\ProtocolHeader::frame, Frame\ConnectionStart::class);
+
+        $tune = $this->connection->rpc(
+            Protocol\Method::connectionStartOk($this->properties->toArray(), Auth\Mechanism::select(
+                $this->config->sasl(),
+                $start->mechanisms,
+            )),
+            Frame\ConnectionTune::class,
+        );
+
+        [$heartbeat, $channelMax, $frameMax] = [
+            $this->config->heartbeat($tune->heartbeat),
+            $this->config->channelMax($tune->channelMax),
+            $this->config->frameMax($tune->frameMax),
+        ];
+
+        $this->connection->rpc(
+            Protocol\Method::connectionTuneOk($channelMax, $frameMax, $heartbeat),
+        );
+
+        $this->properties->tune($channelMax, $frameMax);
+
+        if ($heartbeat > 0) {
+            $this->connection->heartbeat($heartbeat);
+        }
+
+        $this->connection->rpc(
+            Protocol\Method::connectionOpen($this->config->vhost),
+            Frame\ConnectionOpenOk::class,
+        );
+
+        $this->connection->ioLoop($this->hooks);
+
+        $this->hooks->oneshot(0, Frame\ConnectionClose::class)->map(function (Frame\ConnectionClose $close): void {
+            $this->connection()->writeFrame(Protocol\Method::connectionCloseOk());
+            $this->connection()->close();
+
+            $error = Exception\ConnectionWasClosed::byServer($close->replyCode, $close->replyText);
+
+            foreach ($this->channels as $channel) {
+                $channel->abandon($error);
+            }
+
+            $this->channels = [];
+            $this->connection = null;
+        });
     }
 
     private function createConnection(): AmqpConnection

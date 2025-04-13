@@ -34,7 +34,6 @@ final class AmqpTest extends TestCase
 
         $this->dsn = $dsn;
         $this->client = new Client(Config::fromURI($this->dsn));
-        $this->client->connect();
     }
 
     protected function tearDown(): void
@@ -193,7 +192,6 @@ final class AmqpTest extends TestCase
     public function testChannelsExhausted(int $channelMax): void
     {
         $client = new Client(Config::fromURI("{$this->dsn}?channel_max={$channelMax}"));
-        $client->connect();
 
         for ($i = 0; $i < $channelMax; ++$i) {
             $client->channel();

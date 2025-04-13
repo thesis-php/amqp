@@ -234,7 +234,7 @@ This may **seriously reduce** client performance.
 ### Client
 
 The client is the connection facade to the `amqp` server. It is responsible for connecting and disconnecting (also closing all channels) from the server.
-
+It is not necessary to explicitly connect to work with the client. The connection will be established when the first channel is created.
 ```php
 <?php
 
@@ -244,7 +244,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 // your code here
 
@@ -264,7 +263,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->close();
@@ -289,7 +287,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->exchangeDeclare('events', durable: true);
@@ -308,7 +305,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->exchangeBind('service.a', 'service.b');
@@ -327,7 +323,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->exchangeUnbind('service.a', 'service.b');
@@ -346,7 +341,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->exchangeDelete('service.a', ifUnused: true);
@@ -365,7 +359,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $queue = $channel->queueDeclare('service.a.events');
@@ -386,7 +379,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->queueBind('service.a.events', 'service.a');
@@ -405,7 +397,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->queueUnbind('service.a.events', 'service.a');
@@ -424,7 +415,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $messages = $channel->queuePurge('service.a.events');
@@ -444,7 +434,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $messages = $channel->queueDelete('service.a.events', ifUnused: true, ifEmpty: true);
@@ -468,7 +457,6 @@ use Thesis\Amqp\Message;
 use Thesis\Amqp\DeliveryMode;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->publish(new Message(
@@ -496,7 +484,6 @@ use Thesis\Amqp\Message;
 use Thesis\Amqp\PublishMessage;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $confirmation = $channel->publishBatch([
@@ -530,7 +517,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events', noAck: true);
@@ -551,7 +537,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events');
@@ -569,7 +554,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events');
@@ -591,7 +575,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events');
@@ -609,7 +592,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events');
@@ -632,7 +614,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events');
@@ -650,7 +631,6 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $delivery = $channel->get('service.a.events');
@@ -674,7 +654,6 @@ use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Channel;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 
@@ -701,7 +680,6 @@ use Thesis\Amqp\Client;
 use Amp;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 
@@ -736,7 +714,6 @@ use Thesis\Amqp\Client;
 use Amp;
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 
@@ -776,7 +753,6 @@ use Thesis\Amqp\Config;
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 
@@ -813,7 +789,6 @@ use Thesis\Amqp\Config;
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 
@@ -853,7 +828,6 @@ use Thesis\Amqp\Config;
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 $channel->confirmSelect();
@@ -882,7 +856,6 @@ use Thesis\Amqp\Config;
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $client = new Client(Config::fromURI('amqp://thesis:secret@localhost:5673/'));
-$client->connect();
 
 $channel = $client->channel();
 $channel->confirmSelect();
@@ -917,7 +890,6 @@ use Amp;
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$client->connect();
 
 $channel = $client->channel();
 
