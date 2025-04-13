@@ -75,18 +75,26 @@ final class Client
      */
     public function disconnect(int $replyCode = 200, string $replyText = '', Cancellation $cancellation = new NullCancellation()): void
     {
-        if ($this->connection === null) {
+        static $disconnecting = false;
+        if ($disconnecting || $this->connection === null) {
             return;
         }
 
-        foreach ($this->channels as $channel) {
-            $channel->close($replyCode, $replyText);
+        $disconnecting = true;
+
+        try {
+            foreach ($this->channels as $channel) {
+                $channel->close($replyCode, $replyText);
+            }
+
+            $this->connectionClose($replyCode, $replyText, $cancellation);
+            $this->connection()->close();
+        } finally {
+            $disconnecting = false;
+
+            $this->channels = [];
+            $this->connection = null;
         }
-
-        $this->channels = [];
-
-        $this->connectionClose($replyCode, $replyText, $cancellation);
-        $this->connection()->close();
     }
 
     /**
