@@ -1,6 +1,6 @@
-# thesis/amqp
+# Thesis Amqp
 
-Pure asynchronous (fiber based) strictly typed full-featured PHP library for AMQP 0.9.1 protocol.
+Pure asynchronous (fiber based) strictly typed full-featured PHP driver for AMQP 0.9.1 protocol.
 
 ## Installation
 
