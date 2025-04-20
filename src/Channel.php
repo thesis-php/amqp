@@ -272,6 +272,14 @@ final class Channel
     }
 
     /**
+     * @experimental
+     */
+    public function batchConsumer(ConsumeBatchOptions $options): BatchConsumer
+    {
+        return new BatchConsumer($this, $options);
+    }
+
+    /**
      * @param non-empty-string $consumerTag
      * @throws \Throwable
      */

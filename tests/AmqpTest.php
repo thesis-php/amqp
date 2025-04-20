@@ -574,6 +574,50 @@ final class AmqpTest extends TestCase
     }
 
     /**
+     * @param non-empty-string $exchange
+     * @param non-empty-string $queue
+     * @param non-empty-string $routingKey
+     * @param non-empty-string $message
+     * @param array<string, mixed> $headers
+     * @param positive-int $messageCount
+     */
+    #[TestWith(['events', 'events.orders', 'orders', 'simple message', ['x' => 'y'], 5])]
+    public function testPublishConsumeBatch(string $exchange, string $queue, string $routingKey, string $message, array $headers, int $messageCount): void
+    {
+        $channel = $this->client->channel();
+        $channel->exchangeDelete($exchange);
+        $channel->queueDelete($queue);
+
+        $channel->exchangeDeclare($exchange, autoDelete: true);
+        self::assertSame(0, $channel->queueDeclare($queue, autoDelete: true)->messages);
+        $channel->queueBind($queue, $exchange, $routingKey);
+
+        $publishedMessages = [];
+        for ($i = 0; $i < $messageCount; ++$i) {
+            $publishedMessages[] = $messageBody = "{$message}#{$i}";
+            $channel->publish(new Message($messageBody, $headers), $exchange, $routingKey);
+        }
+
+        /** @var DeferredFuture<ConsumeBatch> $deferred */
+        $deferred = new DeferredFuture();
+
+        $canceller = $channel
+            ->batchConsumer(new ConsumeBatchOptions($messageCount))
+            ->consume(static function (ConsumeBatch $batch) use ($deferred): void {
+                $deferred->complete($batch);
+            }, queue: $queue);
+
+        $batch = $deferred->getFuture()->await();
+        $canceller->cancel();
+
+        self::assertCount($messageCount, $batch);
+        self::assertSame($publishedMessages, array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));
+        self::assertSame(0, $channel->queueDeclare($queue, passive: true)->messages);
+
+        $channel->close();
+    }
+
+    /**
      * @param non-empty-string $queue
      */
     #[TestWith(['test'])]
