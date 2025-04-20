@@ -78,12 +78,8 @@ final class BatchConsumer
             if (\count($deliveries) > 0) {
                 $batch = new ConsumeBatch($deliveries);
 
-                try {
-                    $callback($batch, $this->channel);
-                    $batch->ack();
-                } catch (\Throwable) {
-                    $batch->nack();
-                }
+                $callback($batch, $this->channel);
+                $batch->ack();
             }
         }
     }
