@@ -8,7 +8,6 @@ use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredCancellation;
 use Revolt\EventLoop;
-use Thesis\Amqp\Internal\Concurrent;
 
 /**
  * @api
@@ -34,7 +33,7 @@ final class BatchConsumer
         bool $exclusive = false,
         bool $noWait = false,
         array $arguments = [],
-    ): DeferredCancellation {
+    ): Canceller {
         $this->channel->qos(
             prefetchCount: $this->options->count,
             global: $this->options->global,
@@ -50,13 +49,16 @@ final class BatchConsumer
             arguments: $arguments,
         );
 
-        $canceller = new DeferredCancellation();
+        $canceller = new Canceller(
+            $iterator->complete(...),
+            $iterator->cancel(...),
+        );
 
         EventLoop::queue(
             $this->consumeFromIterator(...),
             $iterator,
             $callback,
-            $canceller->getCancellation(),
+            $canceller->cancellation(),
         );
 
         return $canceller;
@@ -70,10 +72,6 @@ final class BatchConsumer
         callable $callback,
         Cancellation $cancellation,
     ): void {
-        $callbackId = $cancellation->subscribe(static function () use ($iterator): void {
-            $iterator->complete();
-        });
-
         try {
             while (!$cancellation->isRequested()) {
                 $deliveries = $this->await($iterator, $cancellation);
@@ -91,48 +89,44 @@ final class BatchConsumer
             }
         } catch (CancelledException) {
             // no-op.
-        } finally {
-            EventLoop::cancel($callbackId);
         }
     }
 
     /**
      * @return list<DeliveryMessage>
      */
-    private function await(Iterator $iterator, Cancellation $cancellation): array
+    private function await(Iterator $iterator, Cancellation $consumerCancellation): array
     {
-        /** @var Concurrent\Selector<null> $selector */
-        $selector = new Concurrent\Selector();
+        $deferred = new DeferredCancellation();
+        $deliveryCancellation = $deferred->getCancellation();
 
-        $selector = $selector->subscribe(
-            Concurrent\CancellationFuture::fromCancellation($cancellation),
-        );
+        $cancellationCallbackId = $consumerCancellation->subscribe($deferred->cancel(...));
 
         if ($this->options->timeout !== null) {
-            $selector = $selector->subscribe(
-                Concurrent\TimerFuture::delay($this->options->timeout),
-            );
+            $delayCallbackId = EventLoop::delay($this->options->timeout, static fn() => $deferred->cancel());
         }
-
-        $count = $this->options->count;
 
         /** @var list<DeliveryMessage> $deliveries */
         $deliveries = [];
 
-        $selector = $selector->subscribe(
-            new Concurrent\BarrierFuture($count, static function (callable $advance) use ($iterator, $count, &$deliveries): void {
-                foreach ($iterator as $delivery) {
-                    $deliveries[] = $delivery;
-                    $advance();
-
-                    if (\count($deliveries) === $count) {
-                        break;
-                    }
+        try {
+            while ($iterator->continue($deliveryCancellation)) {
+                $deliveries[] = $iterator->value();
+                if (\count($deliveries) === $this->options->count) {
+                    break;
                 }
-            }),
-        );
+            }
+        } catch (CancelledException $e) {
+            if (!$deliveryCancellation->isRequested()) {
+                throw $e;
+            }
+        } finally {
+            $consumerCancellation->unsubscribe($cancellationCallbackId);
 
-        $selector->select();
+            if (isset($delayCallbackId)) {
+                EventLoop::cancel($delayCallbackId);
+            }
+        }
 
         return $deliveries;
     }

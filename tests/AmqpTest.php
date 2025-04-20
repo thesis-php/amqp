@@ -589,7 +589,7 @@ final class AmqpTest extends TestCase
         $channel->queueDelete($queue);
 
         $channel->exchangeDeclare($exchange, autoDelete: true);
-        self::assertSame(0, $channel->queueDeclare($queue, autoDelete: true)->messages);
+        self::assertSame(0, $channel->queueDeclare($queue)->messages);
         $channel->queueBind($queue, $exchange, $routingKey);
 
         $publishedMessages = [];
@@ -603,16 +603,14 @@ final class AmqpTest extends TestCase
 
         $canceller = $channel
             ->batchConsumer(new ConsumeBatchOptions($messageCount))
-            ->consume(static function (ConsumeBatch $batch) use ($deferred): void {
-                $deferred->complete($batch);
-            }, queue: $queue);
+            ->consume($deferred->complete(...), queue: $queue);
 
         $batch = $deferred->getFuture()->await();
-        $canceller->cancel();
+        $canceller->complete();
 
         self::assertCount($messageCount, $batch);
         self::assertSame($publishedMessages, array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));
-        self::assertSame(0, $channel->queueDeclare($queue, passive: true)->messages);
+        self::assertSame(0, $channel->queueDelete($queue));
 
         $channel->close();
     }

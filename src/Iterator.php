@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp;
 
+use Amp\Cancellation;
 use Amp\Pipeline;
 
 /**
@@ -65,6 +66,16 @@ final class Iterator implements \IteratorAggregate
     {
         $this->channel->cancel($this->consumerTag, $noWait);
         $this->queue->error($e);
+    }
+
+    public function continue(?Cancellation $cancellation = null): bool
+    {
+        return $this->iterator->continue($cancellation);
+    }
+
+    public function value(): DeliveryMessage
+    {
+        return $this->iterator->getValue();
     }
 
     public function getIterator(): \Traversable

@@ -42,4 +42,4 @@ $canceller = $channel
 
 trapSignal([\SIGINT, \SIGTERM]);
 
-$canceller->cancel();
+$canceller->complete();
