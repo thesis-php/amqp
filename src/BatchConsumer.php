@@ -72,23 +72,19 @@ final class BatchConsumer
         callable $callback,
         Cancellation $cancellation,
     ): void {
-        try {
-            while (!$cancellation->isRequested()) {
-                $deliveries = $this->await($iterator, $cancellation);
+        while (!$cancellation->isRequested()) {
+            $deliveries = $this->await($iterator, $cancellation);
 
-                if (\count($deliveries) > 0) {
-                    $batch = new ConsumeBatch($deliveries);
+            if (\count($deliveries) > 0) {
+                $batch = new ConsumeBatch($deliveries);
 
-                    try {
-                        $callback($batch, $this->channel);
-                        $batch->ack();
-                    } catch (\Throwable) {
-                        $batch->nack();
-                    }
+                try {
+                    $callback($batch, $this->channel);
+                    $batch->ack();
+                } catch (\Throwable) {
+                    $batch->nack();
                 }
             }
-        } catch (CancelledException) {
-            // no-op.
         }
     }
 
@@ -116,10 +112,7 @@ final class BatchConsumer
                     break;
                 }
             }
-        } catch (CancelledException $e) {
-            if (!$deliveryCancellation->isRequested()) {
-                throw $e;
-            }
+        } catch (CancelledException) {
         } finally {
             $consumerCancellation->unsubscribe($cancellationCallbackId);
 
