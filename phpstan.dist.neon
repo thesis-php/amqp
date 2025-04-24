@@ -3,6 +3,7 @@ parameters:
     paths:
         - src
         - tests
+        - examples
     checkBenevolentUnionTypes: true
     editorUrl: '=>'
     editorUrlTitle: '%%file%%:%%line%%'

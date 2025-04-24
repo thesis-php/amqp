@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Amqp;
+namespace Thesis\Amqp\Internal\Cancellation;
 
 use Amp\Cancellation;
 use Amp\DeferredCancellation;
 
 /**
- * @api
+ * @internal
  */
 final class Canceller
 {
@@ -27,7 +27,7 @@ final class Canceller
         $this->deferred = new DeferredCancellation();
     }
 
-    public function complete(bool $noWait = false, ?\Throwable $e = null): void
+    public function cancel(bool $noWait = false, ?\Throwable $e = null): void
     {
         if ($this->cancelled) {
             return;

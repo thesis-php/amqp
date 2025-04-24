@@ -5,83 +5,28 @@ declare(strict_types=1);
 namespace Thesis\Amqp;
 
 use Amp\Cancellation;
-use Amp\Pipeline;
 
 /**
  * @api
- * @template-implements \IteratorAggregate<array-key, DeliveryMessage>
+ * @template T
+ * @template-extends \IteratorAggregate<array-key, T>
  */
-final class Iterator implements \IteratorAggregate
+interface Iterator extends \IteratorAggregate
 {
     /**
-     * @internal
-     * @param non-empty-string $consumerTag
-     * @param non-negative-int $size
+     * @throws \Throwable
      */
-    public static function buffered(string $consumerTag, Channel $channel, int $size): self
-    {
-        /** @var Pipeline\Queue<DeliveryMessage> $queue */
-        $queue = new Pipeline\Queue(bufferSize: $size);
-
-        return new self($queue, $channel, $consumerTag);
-    }
-
-    /** @var Pipeline\ConcurrentIterator<DeliveryMessage> */
-    private readonly Pipeline\ConcurrentIterator $iterator;
-
-    /**
-     * @internal
-     * @param Pipeline\Queue<DeliveryMessage> $queue
-     * @param non-empty-string $consumerTag
-     */
-    private function __construct(
-        private readonly Pipeline\Queue $queue,
-        private readonly Channel $channel,
-        private readonly string $consumerTag,
-    ) {
-        $this->iterator = $this->queue->iterate();
-    }
-
-    /**
-     * @internal
-     */
-    public function push(DeliveryMessage $delivery): void
-    {
-        $this->queue->push($delivery);
-    }
+    public function complete(bool $noWait = false): void;
 
     /**
      * @throws \Throwable
      */
-    public function complete(bool $noWait = false): void
-    {
-        $this->channel->cancel($this->consumerTag, $noWait);
-        $this->queue->complete();
-    }
+    public function cancel(\Throwable $e, bool $noWait = false): void;
+
+    public function continue(?Cancellation $cancellation = null): bool;
 
     /**
-     * @throws \Throwable
+     * @return T
      */
-    public function cancel(\Throwable $e, bool $noWait = false): void
-    {
-        $this->channel->cancel($this->consumerTag, $noWait);
-        $this->queue->error($e);
-    }
-
-    public function continue(?Cancellation $cancellation = null): bool
-    {
-        return $this->iterator->continue($cancellation);
-    }
-
-    public function value(): DeliveryMessage
-    {
-        return $this->iterator->getValue();
-    }
-
-    public function getIterator(): \Traversable
-    {
-        foreach ($this->iterator as $delivery) {
-            yield $delivery;
-        }
-    }
+    public function value(): mixed;
 }

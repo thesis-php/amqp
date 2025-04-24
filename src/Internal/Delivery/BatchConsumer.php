@@ -2,92 +2,52 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Amqp;
+namespace Thesis\Amqp\Internal\Delivery;
 
 use Amp\Cancellation;
 use Amp\CancelledException;
 use Amp\DeferredCancellation;
 use Revolt\EventLoop;
+use Thesis\Amqp\Channel;
+use Thesis\Amqp\ConsumeBatch;
+use Thesis\Amqp\ConsumeBatchOptions;
+use Thesis\Amqp\DeliveryMessage;
+use Thesis\Amqp\Iterator;
 
 /**
- * @api
+ * @internal
  */
 final class BatchConsumer
 {
     public function __construct(
         private readonly Channel $channel,
         private readonly ConsumeBatchOptions $options,
+        private readonly Cancellation $cancellation,
     ) {}
 
     /**
+     * @param Iterator<DeliveryMessage> $iterator
      * @param callable(ConsumeBatch, Channel): void $callback
-     * @param array<string, mixed> $arguments
      * @throws \Throwable
      */
     public function consume(
-        callable $callback,
-        string $queue = '',
-        string $consumerTag = '',
-        bool $noLocal = false,
-        bool $noAck = false,
-        bool $exclusive = false,
-        bool $noWait = false,
-        array $arguments = [],
-    ): Canceller {
-        $this->channel->qos(
-            prefetchCount: $this->options->count,
-            global: $this->options->global,
-        );
-
-        $iterator = $this->channel->consumeIterator(
-            queue: $queue,
-            consumerTag: $consumerTag,
-            noLocal: $noLocal,
-            noAck: $noAck,
-            exclusive: $exclusive,
-            noWait: $noWait,
-            arguments: $arguments,
-        );
-
-        $canceller = new Canceller(
-            $iterator->complete(...),
-            $iterator->cancel(...),
-        );
-
-        EventLoop::queue(
-            $this->consumeFromIterator(...),
-            $iterator,
-            $callback,
-            $canceller->cancellation(),
-        );
-
-        return $canceller;
-    }
-
-    /**
-     * @param callable(ConsumeBatch, Channel): void $callback
-     */
-    private function consumeFromIterator(
         Iterator $iterator,
         callable $callback,
-        Cancellation $cancellation,
     ): void {
-        while (!$cancellation->isRequested()) {
-            $deliveries = $this->await($iterator, $cancellation);
+        while (!$this->cancellation->isRequested()) {
+            $deliveries = $this->awaitDeliveries($iterator, $this->cancellation);
 
             if (\count($deliveries) > 0) {
-                $batch = new ConsumeBatch($deliveries);
-
-                $callback($batch, $this->channel);
-                $batch->ack();
+                $callback(new ConsumeBatch($deliveries), $this->channel);
             }
         }
     }
 
     /**
+     * @param Iterator<DeliveryMessage> $iterator
      * @return list<DeliveryMessage>
      */
-    private function await(Iterator $iterator, Cancellation $consumerCancellation): array
+    private function awaitDeliveries(Iterator $iterator, Cancellation $consumerCancellation): array
     {
         $deferred = new DeferredCancellation();
         $deliveryCancellation = $deferred->getCancellation();

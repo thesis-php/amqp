@@ -601,12 +601,11 @@ final class AmqpTest extends TestCase
         /** @var DeferredFuture<ConsumeBatch> $deferred */
         $deferred = new DeferredFuture();
 
-        $canceller = $channel
-            ->batchConsumer(new ConsumeBatchOptions($messageCount))
-            ->consume($deferred->complete(...), queue: $queue);
+        $consumerTag = $channel->consumeBatch($deferred->complete(...), options: new ConsumeBatchOptions($messageCount), queue: $queue);
 
         $batch = $deferred->getFuture()->await();
-        $canceller->complete();
+        $batch->ack();
+        $channel->cancel($consumerTag);
 
         self::assertCount($messageCount, $batch);
         self::assertSame($publishedMessages, array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));

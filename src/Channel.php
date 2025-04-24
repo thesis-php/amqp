@@ -6,8 +6,12 @@ namespace Thesis\Amqp;
 
 use Amp\Cancellation;
 use Amp\NullCancellation;
+use Revolt\EventLoop;
+use Thesis\Amqp\Internal\Cancellation\CancellationStorage;
+use Thesis\Amqp\Internal\Cancellation\Canceller;
 use Thesis\Amqp\Internal\ChannelMode;
 use Thesis\Amqp\Internal\ConfirmationListener;
+use Thesis\Amqp\Internal\Delivery\BatchConsumer;
 use Thesis\Amqp\Internal\Delivery\Consumer;
 use Thesis\Amqp\Internal\Delivery\ConsumerTagGenerator;
 use Thesis\Amqp\Internal\Delivery\DeliverySupervisor;
@@ -36,6 +40,8 @@ final class Channel
 
     private readonly ConfirmationListener $confirms;
 
+    private readonly CancellationStorage $cancellations;
+
     private ChannelMode $mode = ChannelMode::Regular;
 
     private bool $closed = false;
@@ -55,6 +61,7 @@ final class Channel
         $this->receiver = Receiver::create($this->supervisor);
         $this->returns = Returns::create($this->supervisor);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
+        $this->cancellations = new CancellationStorage();
 
         $this->supervisor->run();
     }
@@ -241,6 +248,7 @@ final class Channel
     /**
      * @param array<string, mixed> $arguments
      * @param non-negative-int $size should be equal to prefetch count on qos method
+     * @return Iterator<DeliveryMessage>
      * @throws \Throwable
      */
     public function consumeIterator(
@@ -255,7 +263,8 @@ final class Channel
     ): Iterator {
         $consumerTag = $this->consumerTags->select($consumerTag);
 
-        $iterator = Iterator::buffered($consumerTag, $this, $size);
+        /** @var Internal\QueueIterator<DeliveryMessage> $iterator */
+        $iterator = Internal\QueueIterator::buffered($consumerTag, $this, $size);
 
         $this->consume(
             callback: $iterator->push(...),
@@ -272,11 +281,94 @@ final class Channel
     }
 
     /**
-     * @experimental
+     * @param callable(ConsumeBatch, self): void $callback
+     * @param array<string, mixed> $arguments
+     * @return non-empty-string Consumer tag
+     * @throws \Throwable
      */
-    public function batchConsumer(ConsumeBatchOptions $options): BatchConsumer
-    {
-        return new BatchConsumer($this, $options);
+    public function consumeBatch(
+        callable $callback,
+        ConsumeBatchOptions $options,
+        string $queue = '',
+        string $consumerTag = '',
+        bool $noLocal = false,
+        bool $noAck = false,
+        bool $exclusive = false,
+        bool $noWait = false,
+        array $arguments = [],
+    ): string {
+        $this->qos(
+            prefetchCount: $options->count,
+            global: $options->global,
+        );
+
+        $consumerTag = $this->consumerTags->select($consumerTag);
+
+        $iterator = $this->consumeIterator(
+            queue: $queue,
+            consumerTag: $consumerTag,
+            noLocal: $noLocal,
+            noAck: $noAck,
+            exclusive: $exclusive,
+            noWait: $noWait,
+            arguments: $arguments,
+        );
+
+        $canceller = new Canceller(
+            $iterator->complete(...),
+            $iterator->cancel(...),
+        );
+
+        $this->cancellations->add($consumerTag, $canceller);
+
+        $consumer = new BatchConsumer(
+            $this,
+            $options,
+            $canceller->cancellation(),
+        );
+
+        EventLoop::queue(
+            $consumer->consume(...),
+            $iterator,
+            $callback,
+        );
+
+        return $consumerTag;
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     * @return Iterator<ConsumeBatch>
+     * @throws \Throwable
+     */
+    public function consumeBatchIterator(
+        ConsumeBatchOptions $options,
+        string $queue = '',
+        string $consumerTag = '',
+        bool $noLocal = false,
+        bool $noAck = false,
+        bool $exclusive = false,
+        bool $noWait = false,
+        array $arguments = [],
+    ): Iterator {
+        $consumerTag = $this->consumerTags->select($consumerTag);
+
+        /** @var Internal\QueueIterator<ConsumeBatch> $iterator */
+        $iterator = Internal\QueueIterator::buffered($consumerTag, $this, $options->count);
+
+        $this->consumeBatch(
+            callback: $iterator->push(...),
+            options: $options,
+            queue: $queue,
+            consumerTag: $consumerTag,
+            noLocal: $noLocal,
+            noAck: $noAck,
+            exclusive: $exclusive,
+            noWait: $noWait,
+            arguments: $arguments,
+        );
+
+        return $iterator;
     }
 
     /**
@@ -296,6 +388,7 @@ final class Channel
         }
 
         $this->consumer->unregister($consumerTag);
+        $this->cancellations->cancel($consumerTag, $noWait);
     }
 
     /**
@@ -660,6 +753,7 @@ final class Channel
     {
         $this->hooks->reject($this->channelId, $e);
         $this->hooks->unsubscribe($this->channelId);
+        $this->cancellations->cancelAll(error: $e);
         $this->closed = true;
     }
 
