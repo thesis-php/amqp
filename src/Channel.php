@@ -24,13 +24,13 @@ use Thesis\Amqp\Internal\Protocol\Frame;
  */
 final class Channel
 {
+    public readonly Returns $returns;
+
     private readonly DeliverySupervisor $supervisor;
 
     private readonly Consumer $consumer;
 
     private readonly Receiver $receiver;
-
-    public readonly Returns $returns;
 
     private readonly ConsumerTagGenerator $consumerTags;
 
