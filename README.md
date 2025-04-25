@@ -777,8 +777,7 @@ $client->disconnect();
 
 #### consume batch
 
-Although AMQP doesn't have a native way to receive messages in batches, we can achieve this using two operations — `basic.qos(count: N)` and `basic.ack(multiple: true)` on the last message.
-`basic.qos limits` the number of messages the AMQP server can push to our consumer, and this number should match the batch size.
+Although AMQP doesn't have a native way to receive messages in batches, we can achieve this using two operations — `basic.qos(count: N)` and `basic.ack(multiple: true)` on the last message. `basic.qos` limits the number of messages the AMQP server can push to our consumer, and this number should match the batch size.
 `basic.ack(multiple: true)` allows us to send a single acknowledgment for the entire batch. You don’t need to implement this yourself — it's included with this library.
 Simply use `Channel::consumeBatch` and pass a callback. As an argument, you’ll receive a `ConsumeBatch` instance, on which you can call `ack` or `nack`.
 Note that you don’t need to call these functions on individual `DeliveryMessage` — only on the `ConsumeBatch`!
