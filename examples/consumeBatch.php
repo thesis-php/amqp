@@ -18,13 +18,13 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $client = new Client(Config::fromURI('amqp://thesis:secret@localhost:5673'));
 $channel = $client->channel();
 
-$channel->queueDeclare('test', autoDelete: true);
+$queue = $channel->queueDeclare(autoDelete: true);
 
 $channel->confirmSelect();
 
 $channel
     ->publishBatch(array_map(
-        static fn(int $number): PublishMessage => new PublishMessage(new Message("{$number}"), routingKey: 'test'),
+        static fn(int $number): PublishMessage => new PublishMessage(new Message("{$number}"), routingKey: $queue->name),
         range(1, 8),
     ))
     ->awaitAll();
@@ -35,7 +35,7 @@ $consumerTag = $channel->consumeBatch(
         $batch->ack();
     },
     new ConsumeBatchOptions(count: 5, timeout: 3),
-    queue: 'test',
+    queue: $queue->name,
 );
 
 /** @var Future<int> $future */

@@ -2,12 +2,6 @@
 
 Pure asynchronous (fiber based) strictly typed full-featured PHP driver for AMQP 0.9.1 protocol.
 
-## Installation
-
-```shell
-composer require thesis/amqp
-```
-
 ## Contents
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -38,6 +32,8 @@ composer require thesis/amqp
   - [ack, nack, reject safety](#ack-nack-reject-safety)
   - [consume](#consume)
   - [consume iterator](#consume-iterator)
+  - [consume batch](#consume-batch)
+  - [consume batch iterator](#consume-batch-iterator)
   - [tx](#tx)
   - [transactional](#transactional)
   - [confirms](#confirms)
@@ -778,6 +774,22 @@ try {
 
 $client->disconnect();
 ```
+
+#### consume batch
+
+Although AMQP doesn't have a native way to receive messages in batches, we can achieve this using two operations — `basic.qos(count: N)` and `basic.ack(multiple: true)` on the last message.
+`basic.qos limits` the number of messages the AMQP server can push to our consumer, and this number should match the batch size.
+`basic.ack(multiple: true)` allows us to send a single acknowledgment for the entire batch. You don’t need to implement this yourself — it's included with this library.
+Simply use `Channel::consumeBatch` and pass a callback. As an argument, you’ll receive a `ConsumeBatch` instance, on which you can call `ack` or `nack`.
+Note that you don’t need to call these functions on individual `DeliveryMessage` — only on the `ConsumeBatch`!
+
+However, since it may take a while to fill a batch, you can specify a `timeout`. This way, you'll receive a non-empty batch either when the required number of messages is collected or when the timer expires — whichever comes first.
+See the [example](examples/consumeBatch.php): you'll see two batches there — one will arrive immediately because the queue already contains enough messages and the second will arrive after a 3-second wait, consisting of just 3 messages.
+
+#### consume batch iterator
+
+Just like with regular `consumeIterator`, where you can work with an `Iterator`, you can also process batches using an `Iterator`.
+By using `consumeBatchIterator` instead of `consumeBatch`, you get an `Iterator` where each element is a `ConsumeBatch`. See the [example](examples/consumeBatchIterator.php) to understand how to use it.
 
 #### tx
 
