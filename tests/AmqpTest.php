@@ -12,6 +12,7 @@ use Thesis\Amqp\Exception\ChannelIsNotTransactional;
 use Thesis\Amqp\Exception\ChannelModeIsImpossible;
 use Thesis\Amqp\Exception\ChannelWasClosed;
 use Thesis\Amqp\Exception\NoAvailableChannel;
+use function Amp\async;
 use function Amp\delay;
 
 #[CoversClass(Client::class)]
@@ -573,43 +574,77 @@ final class AmqpTest extends TestCase
         $channel->close();
     }
 
-    /**
-     * @param non-empty-string $exchange
-     * @param non-empty-string $queue
-     * @param non-empty-string $routingKey
-     * @param non-empty-string $message
-     * @param array<string, mixed> $headers
-     * @param positive-int $messageCount
-     */
-    #[TestWith(['events', 'events.orders', 'orders', 'simple message', ['x' => 'y'], 5])]
-    public function testPublishConsumeBatch(string $exchange, string $queue, string $routingKey, string $message, array $headers, int $messageCount): void
+    public function testPublishConsumeBatch(): void
     {
         $channel = $this->client->channel();
-        $channel->exchangeDelete($exchange);
-        $channel->queueDelete($queue);
 
-        $channel->exchangeDeclare($exchange, autoDelete: true);
-        self::assertSame(0, $channel->queueDeclare($queue)->messages);
-        $channel->queueBind($queue, $exchange, $routingKey);
+        $queue = $channel->queueDeclare();
 
-        $publishedMessages = [];
-        for ($i = 0; $i < $messageCount; ++$i) {
-            $publishedMessages[] = $messageBody = "{$message}#{$i}";
-            $channel->publish(new Message($messageBody, $headers), $exchange, $routingKey);
+        for ($i = 0; $i < 8; ++$i) {
+            $channel->publish(new Message("{$i}"), routingKey: $queue->name);
         }
 
-        /** @var DeferredFuture<ConsumeBatch> $deferred */
-        $deferred = new DeferredFuture();
+        /** @var list<list<string>> $messages */
+        $messages = [];
 
-        $consumerTag = $channel->consumeBatch($deferred->complete(...), options: new ConsumeBatchOptions($messageCount), queue: $queue);
+        $consumerTag = $channel->consumeBatch(
+            static function (ConsumeBatch $batch) use (&$messages): void {
+                $messages[] = array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries);
+                $batch->ack();
+            },
+            options: new ConsumeBatchOptions(count: 5, timeout: 0.1),
+            queue: $queue->name,
+        );
 
-        $batch = $deferred->getFuture()->await();
-        $batch->ack();
+        delay(0.3);
+
         $channel->cancel($consumerTag);
 
-        self::assertCount($messageCount, $batch);
-        self::assertSame($publishedMessages, array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));
-        self::assertSame(0, $channel->queueDelete($queue));
+        self::assertSame(
+            [['0', '1', '2', '3', '4'], ['5', '6', '7']],
+            $messages,
+        );
+        self::assertSame(0, $channel->queueDelete($queue->name));
+
+        $channel->close();
+    }
+
+    public function testPublishConsumeBatchIterator(): void
+    {
+        $channel = $this->client->channel();
+
+        $queue = $channel->queueDeclare();
+        self::assertSame(0, $queue->messages);
+
+        for ($i = 0; $i < 8; ++$i) {
+            $channel->publish(new Message("{$i}"), routingKey: $queue->name);
+        }
+
+        $iterator = $channel->consumeBatchIterator(
+            new ConsumeBatchOptions(count: 5, timeout: 0.1),
+            queue: $queue->name,
+        );
+
+        $future = async(static function () use ($iterator): void {
+            delay(0.3);
+            $iterator->complete();
+        });
+
+        /** @var list<list<string>> $messages */
+        $messages = [];
+
+        foreach ($iterator as $batch) {
+            $messages[] = array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries);
+            $batch->ack();
+        }
+
+        $future->await();
+
+        self::assertSame(
+            [['0', '1', '2', '3', '4'], ['5', '6', '7']],
+            $messages,
+        );
+        self::assertSame(0, $channel->queueDelete($queue->name));
 
         $channel->close();
     }

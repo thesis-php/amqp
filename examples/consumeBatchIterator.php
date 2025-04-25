@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Amp\Future;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
-use Thesis\Amqp\ConsumeBatch;
 use Thesis\Amqp\ConsumeBatchOptions;
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Message;
@@ -29,22 +28,20 @@ $channel
     ))
     ->awaitAll();
 
-$consumerTag = $channel->consumeBatch(
-    static function (ConsumeBatch $batch): void {
-        dump(array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));
-        $batch->ack();
-    },
-    new ConsumeBatchOptions(count: 5, timeout: 3),
-    queue: 'test',
-);
+$iterator = $channel->consumeBatchIterator(new ConsumeBatchOptions(count: 5, timeout: 3), queue: 'test');
 
 /** @var Future<int> $future */
-$future = async(static function () use ($consumerTag, $channel): int {
+$future = async(static function () use ($iterator): int {
     $signal = trapSignal([\SIGINT, \SIGTERM]);
-    $channel->cancel($consumerTag);
+    $iterator->complete();
 
     return $signal;
 });
+
+foreach ($iterator as $batch) {
+    dump(array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));
+    $batch->ack();
+}
 
 dump("signal received: {$future->await()}");
 
