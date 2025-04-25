@@ -17,16 +17,18 @@ use Thesis\Amqp\Iterator;
 final class QueueIterator implements Iterator
 {
     /**
+     * @template E
      * @param non-empty-string $consumerTag
      * @param non-negative-int $size
-     * @return self<T>
+     * @return self<E>
+     * @phpstan-ignore method.templateTypeNotInParameter
      */
     public static function buffered(
         string $consumerTag,
         Channel $channel,
         int $size,
     ): self {
-        /** @var Pipeline\Queue<T> $queue */
+        /** @var Pipeline\Queue<E> $queue */
         $queue = new Pipeline\Queue(bufferSize: $size);
 
         return new self($queue, $channel, $consumerTag);
