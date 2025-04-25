@@ -10,7 +10,7 @@ use Thesis\Amqp\Channel;
 use Thesis\Amqp\Iterator;
 
 /**
- * @api
+ * @internal
  * @template T
  * @template-implements Iterator<T>
  */
