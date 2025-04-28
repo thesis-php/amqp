@@ -783,7 +783,7 @@ Simply use `Channel::consumeBatch` and pass a callback. As an argument, you’ll
 Note that you don’t need to call these functions on individual `DeliveryMessage` — only on the `ConsumeBatch`!
 
 However, since it may take a while to fill a batch, you can specify a `timeout`. This way, you'll receive a non-empty batch either when the required number of messages is collected or when the timer expires — whichever comes first.
-See the [example](examples/consumeBatch.php): you'll see two batches there — one will arrive immediately because the queue already contains enough messages and the second will arrive after a 3-second wait, consisting of just 3 messages.
+See the [example](examples/consumeBatch.php): you'll see two batches there — one will arrive immediately because the queue already contains enough messages and the second will arrive after a 1-second wait, consisting of just 3 messages.
 
 Since `basic.qos(count: N)` is a crucial requirement for implementing batching, the `consumeBatch` and `consumeBatchIterator` methods call it automatically.
 **You don’t need to call `Channel::qos` yourself!**
