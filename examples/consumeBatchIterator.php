@@ -38,7 +38,11 @@ $future = async(static function () use ($iterator): int {
 });
 
 foreach ($iterator as $batch) {
-    dump(array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));
+    dump(array_map(
+        static fn(DeliveryMessage $delivery): string => $delivery->message->body,
+        $batch->deliveries,
+    ));
+
     $batch->ack();
 }
 

@@ -30,9 +30,11 @@ $channel
 
 $consumerTag = $channel->consumeBatch(
     static function (ConsumeBatch $batch): void {
-        foreach ($batch->deliveries as $delivery) {
-            dump($delivery->message->body);
-        }
+        dump(array_map(
+            static fn(DeliveryMessage $delivery): string => $delivery->message->body,
+            $batch->deliveries,
+        ));
+
         $batch->ack();
     },
     count: 5,
