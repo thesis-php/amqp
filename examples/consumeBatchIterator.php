@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Amp\Future;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
-use Thesis\Amqp\ConsumeBatchOptions;
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Message;
 use Thesis\Amqp\PublishMessage;
@@ -28,7 +27,7 @@ $channel
     ))
     ->awaitAll();
 
-$iterator = $channel->consumeBatchIterator(new ConsumeBatchOptions(count: 5, timeout: 3), queue: $queue->name);
+$iterator = $channel->consumeBatchIterator(count: 5, timeout: 1, queue: $queue->name);
 
 /** @var Future<int> $future */
 $future = async(static function () use ($iterator): int {

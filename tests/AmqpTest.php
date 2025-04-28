@@ -592,7 +592,8 @@ final class AmqpTest extends TestCase
                 $messages[] = array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries);
                 $batch->ack();
             },
-            options: new ConsumeBatchOptions(count: 5, timeout: 0.1),
+            count: 5,
+            timeout: 0.1,
             queue: $queue->name,
         );
 
@@ -621,7 +622,8 @@ final class AmqpTest extends TestCase
         }
 
         $iterator = $channel->consumeBatchIterator(
-            new ConsumeBatchOptions(count: 5, timeout: 0.1),
+            count: 5,
+            timeout: 0.1,
             queue: $queue->name,
         );
 

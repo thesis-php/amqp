@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Amqp;
+namespace Thesis\Amqp\Internal\Batch;
 
 /**
- * @api
+ * @internal
  */
 final class ConsumeBatchOptions
 {
@@ -16,6 +16,5 @@ final class ConsumeBatchOptions
     public function __construct(
         public readonly int $count,
         public readonly ?float $timeout = null,
-        public readonly bool $global = false,
     ) {}
 }

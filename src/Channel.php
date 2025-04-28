@@ -7,11 +7,12 @@ namespace Thesis\Amqp;
 use Amp\Cancellation;
 use Amp\NullCancellation;
 use Revolt\EventLoop;
+use Thesis\Amqp\Internal\Batch\BatchConsumer;
+use Thesis\Amqp\Internal\Batch\ConsumeBatchOptions;
 use Thesis\Amqp\Internal\Cancellation\CancellationStorage;
 use Thesis\Amqp\Internal\Cancellation\Canceller;
 use Thesis\Amqp\Internal\ChannelMode;
 use Thesis\Amqp\Internal\ConfirmationListener;
-use Thesis\Amqp\Internal\Delivery\BatchConsumer;
 use Thesis\Amqp\Internal\Delivery\Consumer;
 use Thesis\Amqp\Internal\Delivery\ConsumerTagGenerator;
 use Thesis\Amqp\Internal\Delivery\DeliverySupervisor;
@@ -282,24 +283,28 @@ final class Channel
 
     /**
      * @param callable(ConsumeBatch, self): void $callback
+     * @param positive-int $count
+     * @param ?float $timeout in seconds
      * @param array<string, mixed> $arguments
      * @return non-empty-string Consumer tag
      * @throws \Throwable
      */
     public function consumeBatch(
         callable $callback,
-        ConsumeBatchOptions $options,
+        int $count,
+        ?float $timeout = null,
         string $queue = '',
         string $consumerTag = '',
         bool $noLocal = false,
         bool $noAck = false,
         bool $exclusive = false,
         bool $noWait = false,
+        bool $global = false,
         array $arguments = [],
     ): string {
         $this->qos(
-            prefetchCount: $options->count,
-            global: $options->global,
+            prefetchCount: $count,
+            global: $global,
         );
 
         $consumerTag = $this->consumerTags->select($consumerTag);
@@ -323,7 +328,7 @@ final class Channel
 
         $consumer = new BatchConsumer(
             $this,
-            $options,
+            new ConsumeBatchOptions($count, $timeout),
             $canceller->cancellation(),
         );
 
@@ -337,34 +342,40 @@ final class Channel
     }
 
     /**
+     * @param positive-int $count
+     * @param ?float $timeout in seconds
      * @param array<string, mixed> $arguments
      * @return Iterator<ConsumeBatch>
      * @throws \Throwable
      */
     public function consumeBatchIterator(
-        ConsumeBatchOptions $options,
+        int $count,
+        ?float $timeout = null,
         string $queue = '',
         string $consumerTag = '',
         bool $noLocal = false,
         bool $noAck = false,
         bool $exclusive = false,
         bool $noWait = false,
+        bool $global = false,
         array $arguments = [],
     ): Iterator {
         $consumerTag = $this->consumerTags->select($consumerTag);
 
         /** @var Internal\QueueIterator<ConsumeBatch> $iterator */
-        $iterator = Internal\QueueIterator::buffered($consumerTag, $this, $options->count);
+        $iterator = Internal\QueueIterator::buffered($consumerTag, $this, $count);
 
         $this->consumeBatch(
             callback: $iterator->push(...),
-            options: $options,
+            count: $count,
+            timeout: $timeout,
             queue: $queue,
             consumerTag: $consumerTag,
             noLocal: $noLocal,
             noAck: $noAck,
             exclusive: $exclusive,
             noWait: $noWait,
+            global: $global,
             arguments: $arguments,
         );
 

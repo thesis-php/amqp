@@ -6,7 +6,6 @@ use Amp\Future;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\ConsumeBatch;
-use Thesis\Amqp\ConsumeBatchOptions;
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Message;
 use Thesis\Amqp\PublishMessage;
@@ -34,7 +33,8 @@ $consumerTag = $channel->consumeBatch(
         dump(array_map(static fn(DeliveryMessage $delivery): string => $delivery->message->body, $batch->deliveries));
         $batch->ack();
     },
-    new ConsumeBatchOptions(count: 5, timeout: 3),
+    count: 5,
+    timeout: 1,
     queue: $queue->name,
 );
 

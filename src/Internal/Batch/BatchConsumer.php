@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Amqp\Internal\Delivery;
+namespace Thesis\Amqp\Internal\Batch;
 
 use Amp\Cancellation;
 use Amp\CancelledException;
@@ -10,7 +10,6 @@ use Amp\DeferredCancellation;
 use Revolt\EventLoop;
 use Thesis\Amqp\Channel;
 use Thesis\Amqp\ConsumeBatch;
-use Thesis\Amqp\ConsumeBatchOptions;
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Iterator;
 
