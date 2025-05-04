@@ -23,13 +23,15 @@ use Thesis\Amqp\Internal\MessageProperties;
 use Thesis\Amqp\Internal\Properties;
 use Thesis\Amqp\Internal\Protocol;
 use Thesis\Amqp\Internal\Protocol\Frame;
+use Thesis\Amqp\Internal\Returns;
 
 /**
  * @api
+ * @phpstan-import-type ReturnCallback from Returns
  */
 final class Channel
 {
-    public readonly Returns $returns;
+    private readonly Returns $returns;
 
     private readonly DeliverySupervisor $supervisor;
 
@@ -60,7 +62,7 @@ final class Channel
         $this->consumerTags = new ConsumerTagGenerator();
         $this->consumer = Consumer::create($this->supervisor, $this);
         $this->receiver = Receiver::create($this->supervisor);
-        $this->returns = Returns::create($this->supervisor);
+        $this->returns = new Returns($this->supervisor);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
         $this->cancellations = new CancellationStorage();
 
@@ -727,6 +729,14 @@ final class Channel
 
         $this->mode = ChannelMode::Confirm;
         $this->confirms->listen();
+    }
+
+    /**
+     * @param ReturnCallback $callback
+     */
+    public function onReturn(callable $callback): void
+    {
+        $this->returns->addReturnCallback($callback);
     }
 
     public function isClosed(): bool

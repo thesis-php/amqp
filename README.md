@@ -931,7 +931,7 @@ $client->disconnect();
 
 #### returns
 
-Returned messages (with `mandatory` flag set on `Channel::publish`) can also be handled as a `Channel::returns` iterator.
+Returned messages (with `mandatory` flag set on `Channel::publish`) can be handled in a separate callback.
 
 ```php
 <?php
@@ -941,6 +941,7 @@ declare(strict_types=1);
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\Message;
+use Thesis\Amqp\DeliveryMessage;
 use Amp;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -948,11 +949,8 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 $client = new Client(Config::default());
 
 $channel = $client->channel();
-
-Amp\async(static function () use ($channel): void {
-    foreach ($channel->returns as $return) {
-        var_dump("message '{$return->message->body}' was returned from {$return->exchange}:{$return->routingKey}");
-    }
+$channel->onReturn(static function (DeliveryMessage $delivery): void {
+    // handle returns here
 });
 
 $channel->publish(new Message('...'), routingKey: 'not_exists', mandatory: true);
