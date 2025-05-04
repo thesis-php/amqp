@@ -27,11 +27,13 @@ use Thesis\Amqp\Internal\Returns;
 
 /**
  * @api
- * @phpstan-import-type ReturnCallback from Returns
+ * @phpstan-import-type ReturnCallback from Returns\ReturnListener
  */
 final class Channel
 {
-    private readonly Returns $returns;
+    private readonly Returns\ReturnListener $returns;
+
+    private readonly Returns\ExplicitReturnListener $explicitReturns;
 
     private readonly DeliverySupervisor $supervisor;
 
@@ -62,7 +64,8 @@ final class Channel
         $this->consumerTags = new ConsumerTagGenerator();
         $this->consumer = Consumer::create($this->supervisor, $this);
         $this->receiver = Receiver::create($this->supervisor);
-        $this->returns = new Returns($this->supervisor);
+        $this->returns = new Returns\ReturnListener($this->supervisor);
+        $this->explicitReturns = new Returns\ExplicitReturnListener($this->returns);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
         $this->cancellations = new CancellationStorage();
 
@@ -79,11 +82,22 @@ final class Channel
         bool $mandatory = false,
         bool $immediate = false,
     ): ?PublishConfirmation {
+        /** @var ?PublishConfirmation $confirmation */
+        $confirmation = null;
+
+        if ($this->mode === ChannelMode::Confirm) {
+            $confirmation = $this->confirms->newConfirmation();
+
+            if ($mandatory) {
+                $confirmation->subscribeOnReturn($this->explicitReturns->trace($message));
+            }
+        }
+
         $this->connection->writeFrame(
             $this->doPublish($message, $exchange, $routingKey, $mandatory, $immediate),
         );
 
-        return $this->mode === ChannelMode::Confirm ? $this->confirms->newConfirmation() : null;
+        return $confirmation;
     }
 
     /**
@@ -729,6 +743,7 @@ final class Channel
 
         $this->mode = ChannelMode::Confirm;
         $this->confirms->listen();
+        $this->explicitReturns->listen();
     }
 
     /**

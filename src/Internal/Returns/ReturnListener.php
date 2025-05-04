@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Amqp\Internal;
+namespace Thesis\Amqp\Internal\Returns;
 
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Internal\Delivery\DeliverySupervisor;
@@ -11,7 +11,7 @@ use Thesis\Amqp\Internal\Delivery\DeliverySupervisor;
  * @internal
  * @phpstan-type ReturnCallback = callable(DeliveryMessage): void
  */
-final class Returns
+final class ReturnListener
 {
     /** @var list<ReturnCallback> */
     private array $onReturnCallbacks = [];

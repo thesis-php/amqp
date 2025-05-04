@@ -6,6 +6,7 @@ namespace Thesis\Amqp;
 
 use Amp\Cancellation;
 use Amp\Future;
+use Thesis\Amqp\Internal\Returns\ReturnFuture;
 
 /**
  * @api
@@ -43,6 +44,8 @@ final class PublishConfirmation
 
     private PublishResult $result = PublishResult::Waiting;
 
+    private ?ReturnFuture $returnFuture = null;
+
     /**
      * @param non-negative-int $deliveryTag
      * @param Future<PublishResult> $future
@@ -58,11 +61,28 @@ final class PublishConfirmation
         });
     }
 
+    public function subscribeOnReturn(ReturnFuture $returnFuture): void
+    {
+        $this->returnFuture = $returnFuture;
+    }
+
     public function await(?Cancellation $cancellation = null): PublishResult
     {
-        $cancellation?->subscribe($this->cancel(...));
+        $futures = [$this->future];
 
-        return $this->future->await($cancellation);
+        if ($this->returnFuture !== null) {
+            $futures[] = $this->returnFuture->future;
+        }
+
+        $cancellationId = $cancellation?->subscribe($this->cancel(...));
+
+        try {
+            return Future\awaitFirst($futures, $cancellation);
+        } finally {
+            /** @phpstan-ignore argument.type */
+            $cancellation?->unsubscribe($cancellationId);
+            $this->returnFuture?->complete();
+        }
     }
 
     /**
