@@ -38,6 +38,7 @@ Pure asynchronous (fiber based) strictly typed full-featured PHP driver for AMQP
   - [transactional](#transactional)
   - [confirms](#confirms)
   - [returns](#returns)
+  - [explicit returns](#explicit-returns)
 - [License](#license)
 
 ### Installation
@@ -957,6 +958,52 @@ $channel->publish(new Message('...'), routingKey: 'not_exists', mandatory: true)
 
 $client->disconnect();
 ```
+
+#### explicit returns
+
+In AMQP messaging system it’s possible for a published message to have no destination. This is acceptable in some scenarios such as the `publish-subscribe` pattern, where it’s fine for events to go unhandled, but not in others.
+For example, in the `command` pattern every message is expected to be processed.
+
+To detect and react to such delivery failures, you must publish messages with the `mandatory` flag enabled. This tells the AMQP server to return any message that cannot be routed to at least one queue.
+
+However, there’s a challenge: returned messages are delivered asynchronously via a separate *thread* (not the OS thread) and are not associated with the original publishing request.
+This means the publisher has no immediate way of knowing whether a message was routed or returned. In some cases, you may want to know this synchronously, so that you can:
+- Log the message;
+- Store the message in the DB;
+- Automatically declare the required topology (e.g., queues or bindings) and republish.
+
+To support this use case, the library provides a mechanism based on `publisher confirms` and a custom header:
+- Enable `publisher confirm` mode;
+- Set the `mandatory` flag when publishing.
+
+The library will add a special header `X-Thesis-Mandatory-Id`. This allows the library to correlate any returned message with its original publish request.
+If the message is unroutable, the library will return `PublishResult::Unrouted`.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Config;
+use Thesis\Amqp\Message;
+use Thesis\Amqp\PublishResult;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$client = new Client(Config::fromURI('amqp://thesis:secret@localhost:5673'));
+$channel = $client->channel();
+
+$channel->confirmSelect();
+
+$confirmation = $channel->publish(new Message('abz'), routingKey: 'xxx', mandatory: true);
+
+if ($confirmation?->await() === PublishResult::Unrouted) {
+    // handle use case
+}
+```
+
+> ⚠️ Important: This mechanism only works if `publisher confirms` are enabled. Without them the library cannot track which messages were successfully published to queues, because no frame will receive.
 
 ## License
 
