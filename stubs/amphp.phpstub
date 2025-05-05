@@ -1,0 +1,16 @@
+<?php
+
+namespace Amp;
+
+/**
+ * @template-covariant T
+ */
+final class Future {}
+
+/**
+ * @template T
+ * @param \Closure(never): T $closure
+ * @param mixed ...$args
+ * @return Future<T>
+ */
+function async(\Closure $closure, mixed ...$args): Future {}
