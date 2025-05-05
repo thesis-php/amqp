@@ -33,7 +33,7 @@ final class Channel
 {
     private readonly Returns\ReturnListener $returns;
 
-    private readonly Returns\ExplicitReturnListener $explicitReturns;
+    private readonly Returns\FutureBoundedReturnListener $boundedReturns;
 
     private readonly DeliverySupervisor $supervisor;
 
@@ -65,7 +65,7 @@ final class Channel
         $this->consumer = Consumer::create($this->supervisor, $this);
         $this->receiver = Receiver::create($this->supervisor);
         $this->returns = new Returns\ReturnListener($this->supervisor);
-        $this->explicitReturns = new Returns\ExplicitReturnListener($this->returns);
+        $this->boundedReturns = new Returns\FutureBoundedReturnListener($this->supervisor);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
         $this->cancellations = new CancellationStorage();
 
@@ -86,11 +86,11 @@ final class Channel
         $confirmation = null;
 
         if ($this->mode === ChannelMode::Confirm) {
-            $confirmation = $this->confirms->newConfirmation();
-
             if ($mandatory) {
-                $confirmation->subscribeOnReturn($this->explicitReturns->trace($message));
+                [$message, $returnFuture] = $this->boundedReturns->trace($message);
             }
+
+            $confirmation = $this->confirms->newConfirmation($returnFuture ?? null);
         }
 
         $this->connection->writeFrame(
@@ -114,6 +114,25 @@ final class Channel
 
         $this->connection->writeFrame((function () use ($publishMessages, &$confirmations, &$messages): \Generator {
             foreach ($publishMessages as $publishMessage) {
+                if ($this->mode === ChannelMode::Confirm) {
+                    if ($publishMessage->mandatory) {
+                        [$message, $returnFuture] = $this->boundedReturns->trace($publishMessage->message);
+
+                        $publishMessage = new PublishMessage(
+                            message: $message,
+                            exchange: $publishMessage->exchange,
+                            routingKey: $publishMessage->routingKey,
+                            mandatory: $publishMessage->mandatory,
+                            immediate: $publishMessage->immediate,
+                        );
+                    }
+
+                    $confirmation = $this->confirms->newConfirmation($returnFuture ?? null);
+
+                    $confirmations[] = $confirmation;
+                    $messages[$confirmation->deliveryTag] = $publishMessage;
+                }
+
                 yield from $this->doPublish(
                     $publishMessage->message,
                     $publishMessage->exchange,
@@ -121,13 +140,6 @@ final class Channel
                     $publishMessage->mandatory,
                     $publishMessage->immediate,
                 );
-
-                if ($this->mode === ChannelMode::Confirm) {
-                    $confirmation = $this->confirms->newConfirmation();
-
-                    $confirmations[] = $confirmation;
-                    $messages[$confirmation->deliveryTag] = $publishMessage;
-                }
             }
         })());
 
@@ -743,7 +755,7 @@ final class Channel
 
         $this->mode = ChannelMode::Confirm;
         $this->confirms->listen();
-        $this->explicitReturns->listen();
+        $this->boundedReturns->listen();
     }
 
     /**

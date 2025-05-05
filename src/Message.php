@@ -15,7 +15,7 @@ final class Message
      */
     public function __construct(
         public readonly string $body = '',
-        public array $headers = [],
+        public readonly array $headers = [],
         public readonly ?string $contentType = null,
         public readonly ?string $contentEncoding = null,
         public readonly DeliveryMode $deliveryMode = DeliveryMode::Whatever,

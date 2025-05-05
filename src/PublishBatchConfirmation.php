@@ -6,7 +6,6 @@ namespace Thesis\Amqp;
 
 /**
  * @api
- *
  * @template-implements \IteratorAggregate<PublishConfirmation>
  */
 final class PublishBatchConfirmation implements \IteratorAggregate
@@ -16,33 +15,24 @@ final class PublishBatchConfirmation implements \IteratorAggregate
      * @param list<PublishConfirmation> $confirmations
      */
     public function __construct(
-        private readonly array $messages,
-        private readonly array $confirmations,
+        public readonly array $messages,
+        public readonly array $confirmations,
     ) {}
 
-    public function awaitAll(): void
-    {
-        foreach (PublishConfirmation::awaitAll($this->confirmations) as $publishResult) {
-            if ($publishResult !== PublishResult::Acked) {
-                throw new \LogicException('Failed to publish message.');
-            }
-        }
-    }
-
-    /**
-     * @return list<PublishMessage>
-     */
-    public function unconfirmed(): array
+    public function await(): PublishBatchConfirmationResult
     {
         $unconfirmed = [];
+        $unrouted = [];
 
         foreach (PublishConfirmation::awaitAll($this->confirmations) as $deliveryTag => $publishResult) {
-            if ($publishResult !== PublishResult::Acked) {
+            if ($publishResult === PublishResult::Unrouted) {
+                $unrouted[] = $this->messages[$deliveryTag];
+            } elseif ($publishResult !== PublishResult::Acked) {
                 $unconfirmed[] = $this->messages[$deliveryTag];
             }
         }
 
-        return $unconfirmed;
+        return new PublishBatchConfirmationResult($unconfirmed, $unrouted);
     }
 
     public function getIterator(): \Traversable

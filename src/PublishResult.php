@@ -9,6 +9,7 @@ namespace Thesis\Amqp;
  */
 enum PublishResult
 {
+    case Unrouted;
     case Acked;
     case Nacked;
     case Canceled;

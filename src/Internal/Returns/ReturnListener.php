@@ -21,8 +21,10 @@ final class ReturnListener
         $callbacks = &$this->onReturnCallbacks;
 
         $supervisor->addReturnListener(static function (DeliveryMessage $delivery) use (&$callbacks): void {
-            foreach ($callbacks as $callback) {
-                $callback($delivery);
+            if (!isset($delivery->message->headers[FutureBoundedReturnListener::TRACE_HEADER_KEY])) {
+                foreach ($callbacks as $callback) {
+                    $callback($delivery);
+                }
             }
         });
 

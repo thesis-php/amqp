@@ -26,7 +26,8 @@ $channel
         static fn(int $number): PublishMessage => new PublishMessage(new Message("{$number}"), routingKey: $queue->name),
         range(1, 8),
     ))
-    ->awaitAll();
+    ->await()
+    ->ok();
 
 $consumerTag = $channel->consumeBatch(
     static function (ConsumeBatch $batch): void {

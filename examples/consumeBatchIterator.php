@@ -25,7 +25,8 @@ $channel
         static fn(int $number): PublishMessage => new PublishMessage(new Message("{$number}"), routingKey: $queue->name),
         range(1, 8),
     ))
-    ->awaitAll();
+    ->await()
+    ->ok();
 
 $iterator = $channel->consumeBatchIterator(count: 5, timeout: 1, queue: $queue->name);
 

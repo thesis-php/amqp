@@ -6,7 +6,9 @@ namespace Thesis\Amqp;
 
 use Amp\Cancellation;
 use Amp\Future;
+use Thesis\Amqp\Exception\MessageCannotBeRouted;
 use Thesis\Amqp\Internal\Returns\ReturnFuture;
+use function Amp\async;
 
 /**
  * @api
@@ -36,15 +38,13 @@ final class PublishConfirmation
     {
         $futures = [];
         foreach ($confirmations as $confirmation) {
-            $futures[$confirmation->deliveryTag] = $confirmation->future;
+            $futures[$confirmation->deliveryTag] = async($confirmation->await(...));
         }
 
         return Future::iterate($futures, $cancellation);
     }
 
     private PublishResult $result = PublishResult::Waiting;
-
-    private ?ReturnFuture $returnFuture = null;
 
     /**
      * @param non-negative-int $deliveryTag
@@ -55,19 +55,15 @@ final class PublishConfirmation
         public readonly int $deliveryTag,
         private readonly Future $future,
         private readonly \Closure $cancel,
-    ) {
-        $this->future->map(function (PublishResult $result): void {
-            $this->result = $result;
-        });
-    }
-
-    public function subscribeOnReturn(ReturnFuture $returnFuture): void
-    {
-        $this->returnFuture = $returnFuture;
-    }
+        private readonly ?ReturnFuture $returnFuture = null,
+    ) {}
 
     public function await(?Cancellation $cancellation = null): PublishResult
     {
+        if ($this->result !== PublishResult::Waiting) {
+            return $this->result;
+        }
+
         $futures = [$this->future];
 
         if ($this->returnFuture !== null) {
@@ -77,20 +73,14 @@ final class PublishConfirmation
         $cancellationId = $cancellation?->subscribe($this->cancel(...));
 
         try {
-            return Future\awaitFirst($futures, $cancellation);
+            return $this->result = Future\awaitFirst($futures, $cancellation);
+        } catch (MessageCannotBeRouted) { // @phpstan-ignore-line
+            return $this->result = PublishResult::Unrouted;
         } finally {
             /** @phpstan-ignore argument.type */
             $cancellation?->unsubscribe($cancellationId);
             $this->returnFuture?->complete();
         }
-    }
-
-    /**
-     * @return Future<PublishResult>
-     */
-    public function future(): Future
-    {
-        return $this->future;
     }
 
     public function result(): PublishResult
