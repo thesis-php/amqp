@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Amqp;
 
 use Amp\Cancellation;
+use Amp\CancelledException;
 
 /**
  * @api
@@ -23,6 +24,9 @@ interface Iterator extends \IteratorAggregate
      */
     public function cancel(\Throwable $e, bool $noWait = false): void;
 
+    /**
+     * @throws CancelledException
+     */
     public function continue(?Cancellation $cancellation = null): bool;
 
     /**

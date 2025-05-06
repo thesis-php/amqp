@@ -6,8 +6,8 @@ namespace Thesis\Amqp\Internal\Batch;
 
 use Amp\Cancellation;
 use Amp\CancelledException;
-use Amp\DeferredCancellation;
-use Revolt\EventLoop;
+use Amp\CompositeCancellation;
+use Amp\TimeoutCancellation;
 use Thesis\Amqp\Channel;
 use Thesis\Amqp\ConsumeBatch;
 use Thesis\Amqp\DeliveryMessage;
@@ -48,14 +48,13 @@ final class BatchConsumer
      */
     private function awaitDeliveries(Iterator $iterator, Cancellation $consumerCancellation): array
     {
-        $deferred = new DeferredCancellation();
-        $deliveryCancellation = $deferred->getCancellation();
-
-        $cancellationCallbackId = $consumerCancellation->subscribe($deferred->cancel(...));
+        $cancellations = [$consumerCancellation];
 
         if ($this->options->timeout !== null) {
-            $delayCallbackId = EventLoop::delay($this->options->timeout, static fn() => $deferred->cancel());
+            $cancellations[] = new TimeoutCancellation($this->options->timeout);
         }
+
+        $deliveryCancellation = new CompositeCancellation(...$cancellations);
 
         /** @var list<DeliveryMessage> $deliveries */
         $deliveries = [];
@@ -68,12 +67,6 @@ final class BatchConsumer
                 }
             }
         } catch (CancelledException) {
-        } finally {
-            $consumerCancellation->unsubscribe($cancellationCallbackId);
-
-            if (isset($delayCallbackId)) {
-                EventLoop::cancel($delayCallbackId);
-            }
         }
 
         return $deliveries;
