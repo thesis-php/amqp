@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ab7a5000df7d87bf6eabe4e4417e401d",
+    "content-hash": "ef446eb1deb204b736b002eab139775a",
     "packages": [
         {
             "name": "amphp/amp",
@@ -1721,6 +1721,67 @@
                 }
             ],
             "time": "2025-05-07T18:30:37+00:00"
+        },
+        {
+            "name": "thesis/time-span",
+            "version": "0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thesis-php/time-span.git",
+                "reference": "84fd9fa412d0534f268c74e6b745c931ff8776ed"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thesis-php/time-span/zipball/84fd9fa412d0534f268c74e6b745c931ff8776ed",
+                "reference": "84fd9fa412d0534f268c74e6b745c931ff8776ed",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "bamarni/composer-bin-plugin": "^1.8.2",
+                "phpunit/phpunit": "^12.1.4"
+            },
+            "type": "library",
+            "extra": {
+                "bamarni-bin": {
+                    "bin-links": false,
+                    "forward-command": true,
+                    "target-directory": "tools"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Thesis\\Time\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Valentin Udaltsov",
+                    "email": "udaltsov.valentin@gmail.com"
+                },
+                {
+                    "name": "Thesis Team",
+                    "homepage": "https://github.com/orgs/thesis-php/people"
+                }
+            ],
+            "description": "Thesis TimeSpan",
+            "support": {
+                "issues": "https://github.com/thesis-php/time-span/issues",
+                "source": "https://github.com/thesis-php/time-span/tree/0.2.0"
+            },
+            "funding": [
+                {
+                    "url": "https://www.tinkoff.ru/cf/5MqZQas2dk7",
+                    "type": "custom"
+                }
+            ],
+            "time": "2025-05-09T10:55:25+00:00"
         }
     ],
     "packages-dev": [
@@ -3538,14 +3599,14 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.3",
         "ext-filter": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.3.17"
     },
