@@ -20,8 +20,14 @@ final readonly class PublishBatchConfirmationResult
 
     public function ok(): void
     {
-        if (\count($this->unconfirmed) > 0 || \count($this->unrouted) > 0) {
-            throw new \RuntimeException('Failed to publish message.');
+        $failedCount = \count($this->unconfirmed) + \count($this->unrouted);
+
+        if ($failedCount > 0) {
+            throw new \RuntimeException(\sprintf(
+                'Failed to publish %d message%s.',
+                $failedCount,
+                $failedCount === 1 ? '' : 's',
+            ));
         }
     }
 }
