@@ -10,18 +10,18 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class QueueBind implements Frame
+final readonly class QueueBind implements Frame
 {
     /**
      * @param array<string, mixed> $arguments
      */
     public function __construct(
-        public readonly string $queue,
-        public readonly string $exchange,
-        public readonly string $routingKey,
-        public readonly array $arguments = [],
-        public readonly bool $noWait = false,
-        public readonly int $reserved1 = 0,
+        public string $queue,
+        public string $exchange,
+        public string $routingKey,
+        public array $arguments = [],
+        public bool $noWait = false,
+        public int $reserved1 = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

@@ -11,18 +11,18 @@ use Thesis\Amqp\Internal\Protocol\Auth\Mechanism;
  * @api
  * @phpstan-import-type AmqpScheme from Scheme
  */
-final class Config
+final readonly class Config
 {
-    private const DEFAULT_URL = 'localhost:5672';
-    private const DEFAULT_HOST = 'localhost';
-    private const DEFAULT_PORT = 5672;
-    private const DEFAULT_USERNAME = 'guest';
-    private const DEFAULT_PASSWORD = 'guest';
-    private const DEFAULT_VHOST = '/';
-    private const DEFAULT_CONNECTION_TIMEOUT = 10;
-    private const DEFAULT_HEARTBEAT_INTERVAL = 60;
-    private const MAX_CHANNEL = 0xFFFF;
-    private const MAX_FRAME = 0xFFFF;
+    private const string DEFAULT_URL = 'localhost:5672';
+    private const string DEFAULT_HOST = 'localhost';
+    private const int DEFAULT_PORT = 5672;
+    private const string DEFAULT_USERNAME = 'guest';
+    private const string DEFAULT_PASSWORD = 'guest';
+    private const string DEFAULT_VHOST = '/';
+    private const int DEFAULT_CONNECTION_TIMEOUT = 10;
+    private const int DEFAULT_HEARTBEAT_INTERVAL = 60;
+    private const int MAX_CHANNEL = 0xFFFF;
+    private const int MAX_FRAME = 0xFFFF;
 
     /** @var non-empty-list<Mechanism> */
     private array $sasl;
@@ -37,21 +37,21 @@ final class Config
      * @param int<0, 65535> $frameMax
      */
     public function __construct(
-        public readonly Scheme $scheme = Scheme::amqp,
-        public readonly array $urls = [self::DEFAULT_URL],
-        public readonly string $user = self::DEFAULT_USERNAME,
-        public readonly string $password = self::DEFAULT_PASSWORD,
-        public readonly string $vhost = self::DEFAULT_VHOST,
-        public readonly ?string $certFile = null,
-        public readonly ?string $keyFile = null,
-        public readonly ?string $cacertFile = null,
-        public readonly ?string $serverName = null,
-        public readonly array $authMechanisms = [],
-        public readonly int $heartbeat = self::DEFAULT_HEARTBEAT_INTERVAL,
-        public readonly float $connectionTimeout = self::DEFAULT_CONNECTION_TIMEOUT,
-        public readonly int $channelMax = self::MAX_CHANNEL,
-        public readonly int $frameMax = self::MAX_FRAME,
-        public readonly bool $tcpNoDelay = true,
+        public Scheme $scheme = Scheme::amqp,
+        public array $urls = [self::DEFAULT_URL],
+        public string $user = self::DEFAULT_USERNAME,
+        public string $password = self::DEFAULT_PASSWORD,
+        public string $vhost = self::DEFAULT_VHOST,
+        public ?string $certFile = null,
+        public ?string $keyFile = null,
+        public ?string $cacertFile = null,
+        public ?string $serverName = null,
+        public array $authMechanisms = [],
+        public int $heartbeat = self::DEFAULT_HEARTBEAT_INTERVAL,
+        public float $connectionTimeout = self::DEFAULT_CONNECTION_TIMEOUT,
+        public int $channelMax = self::MAX_CHANNEL,
+        public int $frameMax = self::MAX_FRAME,
+        public bool $tcpNoDelay = true,
     ) {
         $authMechanisms = $this->authMechanisms;
         if (\count($authMechanisms) === 0) {

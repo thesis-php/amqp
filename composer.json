@@ -71,6 +71,7 @@
         "analyse-deps": "tools/composer-dependency-analyser/vendor/bin/composer-dependency-analyser",
         "check": [
             "@composer fixcs -- --dry-run",
+            "@composer rector -- --dry-run",
             "@phpstan",
             "@composer validate",
             "@composer normalize --dry-run",

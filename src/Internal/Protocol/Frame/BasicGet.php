@@ -10,15 +10,15 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicGet implements Frame
+final readonly class BasicGet implements Frame
 {
     /**
      * @param non-negative-int $reserved1
      */
     public function __construct(
-        public readonly string $queue,
-        public readonly bool $noAck = false,
-        public readonly int $reserved1 = 0,
+        public string $queue,
+        public bool $noAck = false,
+        public int $reserved1 = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

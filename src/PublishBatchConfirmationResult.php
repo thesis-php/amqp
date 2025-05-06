@@ -7,15 +7,15 @@ namespace Thesis\Amqp;
 /**
  * @api
  */
-final class PublishBatchConfirmationResult
+final readonly class PublishBatchConfirmationResult
 {
     /**
      * @param list<PublishMessage> $unconfirmed
      * @param list<PublishMessage> $unrouted
      */
     public function __construct(
-        public readonly array $unconfirmed,
-        public readonly array $unrouted,
+        public array $unconfirmed,
+        public array $unrouted,
     ) {}
 
     public function ok(): void

@@ -10,7 +10,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ExchangeDeclare implements Frame
+final readonly class ExchangeDeclare implements Frame
 {
     /**
      * @param non-empty-string $exchange
@@ -19,15 +19,15 @@ final class ExchangeDeclare implements Frame
      * @param non-negative-int $reserved1
      */
     public function __construct(
-        public readonly string $exchange,
-        public readonly string $exchangeType,
-        public readonly bool $passive = false,
-        public readonly bool $durable = false,
-        public readonly bool $autoDelete = false,
-        public readonly bool $internal = false,
-        public readonly bool $noWait = false,
-        public readonly array $arguments = [],
-        public readonly int $reserved1 = 0,
+        public string $exchange,
+        public string $exchangeType,
+        public bool $passive = false,
+        public bool $durable = false,
+        public bool $autoDelete = false,
+        public bool $internal = false,
+        public bool $noWait = false,
+        public array $arguments = [],
+        public int $reserved1 = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): Frame

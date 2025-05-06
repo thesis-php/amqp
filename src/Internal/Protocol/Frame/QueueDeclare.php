@@ -10,20 +10,20 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class QueueDeclare implements Frame
+final readonly class QueueDeclare implements Frame
 {
     /**
      * @param array<string, mixed> $arguments
      */
     public function __construct(
-        public readonly string $queue,
-        public readonly bool $passive = false,
-        public readonly bool $durable = false,
-        public readonly bool $exclusive = false,
-        public readonly bool $autoDelete = false,
-        public readonly bool $noWait = false,
-        public readonly array $arguments = [],
-        public readonly int $reserved1 = 0,
+        public string $queue,
+        public bool $passive = false,
+        public bool $durable = false,
+        public bool $exclusive = false,
+        public bool $autoDelete = false,
+        public bool $noWait = false,
+        public array $arguments = [],
+        public int $reserved1 = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

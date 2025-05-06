@@ -10,7 +10,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class QueueDeclareOk implements Frame
+final readonly class QueueDeclareOk implements Frame
 {
     /**
      * @param non-empty-string $queue
@@ -18,9 +18,9 @@ final class QueueDeclareOk implements Frame
      * @param non-negative-int $consumers
      */
     public function __construct(
-        public readonly string $queue,
-        public readonly int $messages,
-        public readonly int $consumers,
+        public string $queue,
+        public int $messages,
+        public int $consumers,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

@@ -10,14 +10,14 @@ use Thesis\Amqp\Internal\Io;
 /**
  * @internal
  */
-final class Body implements Frame
+final readonly class Body implements Frame
 {
     /**
      * @param non-negative-int $channelId
      */
     public function __construct(
-        public readonly int $channelId,
-        public readonly string $body,
+        public int $channelId,
+        public string $body,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

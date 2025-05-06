@@ -9,7 +9,7 @@ namespace Thesis\Amqp\Internal;
  */
 final class Properties
 {
-    private const DEFAULT_PLATFORM = 'php';
+    private const string DEFAULT_PLATFORM = 'php';
 
     /** @var non-negative-int */
     private int $maxChannel = 0xFFFF;

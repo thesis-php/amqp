@@ -10,10 +10,10 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicGetEmpty implements Frame
+final readonly class BasicGetEmpty implements Frame
 {
     public function __construct(
-        public readonly string $reserved1 = '',
+        public string $reserved1 = '',
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

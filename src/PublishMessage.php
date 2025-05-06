@@ -7,13 +7,13 @@ namespace Thesis\Amqp;
 /**
  * @api
  */
-final class PublishMessage
+final readonly class PublishMessage
 {
     public function __construct(
-        public readonly Message $message,
-        public readonly string $exchange = '',
-        public readonly string $routingKey = '',
-        public readonly bool $mandatory = false,
-        public readonly bool $immediate = false,
+        public Message $message,
+        public string $exchange = '',
+        public string $routingKey = '',
+        public bool $mandatory = false,
+        public bool $immediate = false,
     ) {}
 }

@@ -11,7 +11,7 @@ use Thesis\Amqp\Internal\MessageProperties;
 /**
  * @internal
  */
-final class Header implements Frame
+final readonly class Header implements Frame
 {
     /**
      * @param non-negative-int $channelId
@@ -19,10 +19,10 @@ final class Header implements Frame
      * @param non-negative-int $weight
      */
     public function __construct(
-        public readonly int $channelId,
-        public readonly int $classId,
-        public readonly MessageProperties $properties,
-        public readonly int $weight = 0,
+        public int $channelId,
+        public int $classId,
+        public MessageProperties $properties,
+        public int $weight = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

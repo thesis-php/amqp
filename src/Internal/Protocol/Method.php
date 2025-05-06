@@ -11,7 +11,7 @@ use Thesis\Endian\endian;
 /**
  * @internal
  */
-final class Method implements Frame
+final readonly class Method implements Frame
 {
     /**
      * @param array<string, mixed> $clientProperties
@@ -638,10 +638,10 @@ final class Method implements Frame
      * @param non-negative-int $channelId all connection frames go through zero channel, so it will be the default channel
      */
     private function __construct(
-        public readonly int $classType,
-        public readonly int $classMethod,
-        public readonly Frame $frame,
-        public readonly int $channelId = 0,
+        public int $classType,
+        public int $classMethod,
+        public Frame $frame,
+        public int $channelId = 0,
     ) {}
 
     public function write(Io\WriteBytes $writer): void

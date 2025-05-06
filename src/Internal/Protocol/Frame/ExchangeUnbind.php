@@ -10,7 +10,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ExchangeUnbind implements Frame
+final readonly class ExchangeUnbind implements Frame
 {
     /**
      * @param non-empty-string $destination
@@ -19,12 +19,12 @@ final class ExchangeUnbind implements Frame
      * @param non-negative-int $reserved1
      */
     public function __construct(
-        public readonly string $destination,
-        public readonly string $source,
-        public readonly string $routingKey = '',
-        public readonly array $arguments = [],
-        public readonly bool $noWait = false,
-        public readonly int $reserved1 = 0,
+        public string $destination,
+        public string $source,
+        public string $routingKey = '',
+        public array $arguments = [],
+        public bool $noWait = false,
+        public int $reserved1 = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

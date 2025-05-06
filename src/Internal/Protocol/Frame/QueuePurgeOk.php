@@ -10,13 +10,13 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class QueuePurgeOk implements Frame
+final readonly class QueuePurgeOk implements Frame
 {
     /**
      * @param non-negative-int $messages
      */
     public function __construct(
-        public readonly int $messages,
+        public int $messages,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

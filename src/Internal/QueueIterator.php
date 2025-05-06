@@ -14,7 +14,7 @@ use Thesis\Amqp\Iterator;
  * @template T
  * @template-implements Iterator<T>
  */
-final class QueueIterator implements Iterator
+final readonly class QueueIterator implements Iterator
 {
     /**
      * @template E
@@ -35,16 +35,16 @@ final class QueueIterator implements Iterator
     }
 
     /** @var Pipeline\ConcurrentIterator<T> */
-    private readonly Pipeline\ConcurrentIterator $iterator;
+    private Pipeline\ConcurrentIterator $iterator;
 
     /**
      * @param Pipeline\Queue<T> $queue
      * @param non-empty-string $consumerTag
      */
     private function __construct(
-        private readonly Pipeline\Queue $queue,
-        private readonly Channel $channel,
-        private readonly string $consumerTag,
+        private Pipeline\Queue $queue,
+        private Channel $channel,
+        private string $consumerTag,
     ) {
         $this->iterator = $this->queue->iterate();
     }

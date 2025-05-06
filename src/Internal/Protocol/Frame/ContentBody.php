@@ -11,10 +11,10 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ContentBody implements Frame
+final readonly class ContentBody implements Frame
 {
     public function __construct(
-        public readonly string $body,
+        public string $body,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

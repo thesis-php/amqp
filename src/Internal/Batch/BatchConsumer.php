@@ -16,12 +16,12 @@ use Thesis\Amqp\Iterator;
 /**
  * @internal
  */
-final class BatchConsumer
+final readonly class BatchConsumer
 {
     public function __construct(
-        private readonly Channel $channel,
-        private readonly ConsumeBatchOptions $options,
-        private readonly Cancellation $cancellation,
+        private Channel $channel,
+        private ConsumeBatchOptions $options,
+        private Cancellation $cancellation,
     ) {}
 
     /**

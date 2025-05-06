@@ -10,12 +10,12 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ConnectionTune implements Frame
+final readonly class ConnectionTune implements Frame
 {
     public function __construct(
-        public readonly int $channelMax,
-        public readonly int $frameMax,
-        public readonly int $heartbeat,
+        public int $channelMax,
+        public int $frameMax,
+        public int $heartbeat,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

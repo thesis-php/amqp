@@ -10,10 +10,10 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ChannelFlow implements Frame
+final readonly class ChannelFlow implements Frame
 {
     public function __construct(
-        public readonly bool $active,
+        public bool $active,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

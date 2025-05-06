@@ -12,7 +12,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ContentHeader implements Frame
+final readonly class ContentHeader implements Frame
 {
     /**
      * @param non-negative-int $classId
@@ -21,11 +21,11 @@ final class ContentHeader implements Frame
      * @param non-negative-int $flags
      */
     public function __construct(
-        public readonly int $classId,
-        public readonly int $weight,
-        public readonly int $bodySize,
-        public readonly int $flags,
-        public readonly MessageProperties $properties,
+        public int $classId,
+        public int $weight,
+        public int $bodySize,
+        public int $flags,
+        public MessageProperties $properties,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

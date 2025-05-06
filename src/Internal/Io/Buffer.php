@@ -18,20 +18,15 @@ final class Buffer implements
     WriterTo,
     \Countable
 {
-    private string $buffer;
-
-    private readonly endian $endian;
-
     public static function empty(endian $endian = endian::network): self
     {
         return new self(endian: $endian);
     }
 
-    private function __construct(string $buffer = '', endian $endian = endian::network)
-    {
-        $this->endian = $endian;
-        $this->buffer = $buffer;
-    }
+    private function __construct(
+        private string $buffer = '',
+        private readonly endian $endian = endian::network,
+    ) {}
 
     public function writeUint8(int $v): self
     {

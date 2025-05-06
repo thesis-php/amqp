@@ -10,7 +10,7 @@ use Thesis\Amqp\DeliveryMessage;
 /**
  * @internal
  */
-final class Receiver
+final readonly class Receiver
 {
     public static function create(DeliverySupervisor $supervisor): self
     {
@@ -36,7 +36,7 @@ final class Receiver
     private Pipeline\Queue $queue;
 
     private function __construct(
-        private readonly DeliverySupervisor $supervisor,
+        private DeliverySupervisor $supervisor,
     ) {
         /** @var Pipeline\Queue<null|DeliveryMessage> $queue */
         $queue = new Pipeline\Queue(bufferSize: 1);

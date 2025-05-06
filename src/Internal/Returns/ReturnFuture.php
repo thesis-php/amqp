@@ -9,15 +9,15 @@ use Amp\Future;
 /**
  * @internal
  */
-final class ReturnFuture
+final readonly class ReturnFuture
 {
     /**
      * @param Future<never> $future
      * @param \Closure(): void $complete
      */
     public function __construct(
-        public readonly Future $future,
-        private readonly \Closure $complete,
+        public Future $future,
+        private \Closure $complete,
     ) {}
 
     public function complete(): void

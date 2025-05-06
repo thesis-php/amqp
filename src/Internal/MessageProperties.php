@@ -10,22 +10,22 @@ use Thesis\Amqp\Message;
 /**
  * @internal
  */
-final class MessageProperties
+final readonly class MessageProperties
 {
-    private const FLAG_CONTENT_TYPE = 0x8000;
-    private const FLAG_CONTENT_ENCODING = 0x4000;
-    private const FLAG_HEADERS = 0x2000;
-    private const FLAG_DELIVERY_MODE = 0x1000;
-    private const FLAG_PRIORITY = 0x0800;
-    private const FLAG_CORRELATION_ID = 0x0400;
-    private const FLAG_REPLY_TO = 0x0200;
-    private const FLAG_EXPIRATION = 0x0100;
-    private const FLAG_MESSAGE_ID = 0x0080;
-    private const FLAG_TIMESTAMP = 0x0040;
-    private const FLAG_TYPE = 0x0020;
-    private const FLAG_USER_ID = 0x0010;
-    private const FLAG_APP_ID = 0x0008;
-    private const FLAG_RESERVED1 = 0x0004;
+    private const int FLAG_CONTENT_TYPE = 0x8000;
+    private const int FLAG_CONTENT_ENCODING = 0x4000;
+    private const int FLAG_HEADERS = 0x2000;
+    private const int FLAG_DELIVERY_MODE = 0x1000;
+    private const int FLAG_PRIORITY = 0x0800;
+    private const int FLAG_CORRELATION_ID = 0x0400;
+    private const int FLAG_REPLY_TO = 0x0200;
+    private const int FLAG_EXPIRATION = 0x0100;
+    private const int FLAG_MESSAGE_ID = 0x0080;
+    private const int FLAG_TIMESTAMP = 0x0040;
+    private const int FLAG_TYPE = 0x0020;
+    private const int FLAG_USER_ID = 0x0010;
+    private const int FLAG_APP_ID = 0x0008;
+    private const int FLAG_RESERVED1 = 0x0004;
 
     /**
      * @param non-negative-int $bodyLen
@@ -33,20 +33,20 @@ final class MessageProperties
      * @param ?int<0, 9> $priority
      */
     private function __construct(
-        public readonly int $bodyLen = 0,
-        public readonly array $headers = [],
-        public readonly ?string $contentType = null,
-        public readonly ?string $contentEncoding = null,
-        public readonly DeliveryMode $deliveryMode = DeliveryMode::Whatever,
-        public readonly ?int $priority = null,
-        public readonly ?string $correlationId = null,
-        public readonly ?string $replyTo = null,
-        public readonly ?string $expiration = null,
-        public readonly ?string $messageId = null,
-        public readonly ?\DateTimeImmutable $timestamp = null,
-        public readonly ?string $type = null,
-        public readonly ?string $userId = null,
-        public readonly ?string $appId = null,
+        public int $bodyLen = 0,
+        public array $headers = [],
+        public ?string $contentType = null,
+        public ?string $contentEncoding = null,
+        public DeliveryMode $deliveryMode = DeliveryMode::Whatever,
+        public ?int $priority = null,
+        public ?string $correlationId = null,
+        public ?string $replyTo = null,
+        public ?string $expiration = null,
+        public ?string $messageId = null,
+        public ?\DateTimeImmutable $timestamp = null,
+        public ?string $type = null,
+        public ?string $userId = null,
+        public ?string $appId = null,
     ) {}
 
     public static function fromMessage(Message $message): self

@@ -9,8 +9,8 @@ namespace Thesis\Amqp\Internal\Delivery;
  */
 final class ConsumerTagGenerator
 {
-    private const TAG_LENGTH_MAX = 0xFF;
-    private const PACKAGE_NAME = 'thesis/amqp';
+    private const int TAG_LENGTH_MAX = 0xFF;
+    private const string PACKAGE_NAME = 'thesis/amqp';
 
     /** @var non-empty-string */
     private readonly string $commandName;

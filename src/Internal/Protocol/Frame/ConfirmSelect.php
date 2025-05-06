@@ -10,10 +10,10 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ConfirmSelect implements Frame
+final readonly class ConfirmSelect implements Frame
 {
     public function __construct(
-        public readonly bool $noWait = false,
+        public bool $noWait = false,
     ) {}
 
     public static function read(Io\ReadBytes $reader): Frame

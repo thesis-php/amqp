@@ -12,15 +12,15 @@ use Thesis\Endian\endian;
 /**
  * @internal
  */
-final class ConnectionStartOk implements Frame
+final readonly class ConnectionStartOk implements Frame
 {
     /**
      * @param array<string, mixed> $clientProperties
      */
     public function __construct(
-        public readonly array $clientProperties,
-        public readonly Mechanism $auth,
-        public readonly string $locale = 'en_US',
+        public array $clientProperties,
+        public Mechanism $auth,
+        public string $locale = 'en_US',
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

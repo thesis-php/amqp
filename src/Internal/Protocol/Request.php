@@ -7,13 +7,13 @@ namespace Thesis\Amqp\Internal\Protocol;
 /**
  * @internal
  */
-final class Request
+final readonly class Request
 {
     /**
      * @param non-negative-int $channelId
      */
     public function __construct(
-        public readonly int $channelId,
-        public readonly Frame $frame,
+        public int $channelId,
+        public Frame $frame,
     ) {}
 }

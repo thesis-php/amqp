@@ -7,14 +7,14 @@ namespace Thesis\Amqp\Internal\Batch;
 /**
  * @internal
  */
-final class ConsumeBatchOptions
+final readonly class ConsumeBatchOptions
 {
     /**
      * @param positive-int $count
      * @param ?float $timeout in seconds
      */
     public function __construct(
-        public readonly int $count,
-        public readonly ?float $timeout = null,
+        public int $count,
+        public ?float $timeout = null,
     ) {}
 }

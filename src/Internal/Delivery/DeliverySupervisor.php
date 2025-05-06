@@ -18,9 +18,9 @@ use Thesis\Amqp\Message;
  */
 final class DeliverySupervisor
 {
-    private const WAIT = 0;
-    private const HEADER = 1;
-    private const BODY = 2;
+    private const int WAIT = 0;
+    private const int HEADER = 1;
+    private const int BODY = 2;
 
     /** @var self::* */
     private int $step = self::WAIT;

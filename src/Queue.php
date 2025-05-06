@@ -7,7 +7,7 @@ namespace Thesis\Amqp;
 /**
  * @api
  */
-final class Queue
+final readonly class Queue
 {
     /**
      * @param non-empty-string $name
@@ -15,8 +15,8 @@ final class Queue
      * @param non-negative-int $consumers
      */
     public function __construct(
-        public readonly string $name,
-        public readonly int $messages,
-        public readonly int $consumers,
+        public string $name,
+        public int $messages,
+        public int $consumers,
     ) {}
 }

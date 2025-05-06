@@ -21,8 +21,6 @@ use Thesis\ByteWriter\Writer;
  */
 final class AmqpConnection implements Writer
 {
-    private readonly Socket $socket;
-
     private readonly Protocol\Reader $reader;
 
     private readonly Buffer $buffer;
@@ -33,14 +31,14 @@ final class AmqpConnection implements Writer
 
     private bool $closed = false;
 
-    public function __construct(Socket $socket)
-    {
+    public function __construct(
+        private readonly Socket $socket,
+    ) {
         $this->buffer = Buffer::empty();
-        $this->socket = $socket;
         $this->reader = new Protocol\Reader(
             new ReaderWriter(
                 new BufferedReaderWriter(
-                    new AmpReaderWriter($socket),
+                    new AmpReaderWriter($this->socket),
                 ),
             ),
         );

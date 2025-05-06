@@ -10,16 +10,16 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicQos implements Frame
+final readonly class BasicQos implements Frame
 {
     /**
      * @param non-negative-int $prefetchSize
      * @param non-negative-int $prefetchCount
      */
     public function __construct(
-        public readonly int $prefetchSize,
-        public readonly int $prefetchCount,
-        public readonly bool $global,
+        public int $prefetchSize,
+        public int $prefetchCount,
+        public bool $global,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

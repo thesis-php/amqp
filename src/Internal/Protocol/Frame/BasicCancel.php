@@ -10,11 +10,11 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicCancel implements Frame
+final readonly class BasicCancel implements Frame
 {
     public function __construct(
-        public readonly string $consumerTag,
-        public readonly bool $noWait,
+        public string $consumerTag,
+        public bool $noWait,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

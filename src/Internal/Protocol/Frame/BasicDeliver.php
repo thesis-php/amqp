@@ -10,17 +10,17 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicDeliver implements Frame
+final readonly class BasicDeliver implements Frame
 {
     /**
      * @param non-negative-int $deliveryTag
      */
     public function __construct(
-        public readonly string $consumerTag,
-        public readonly int $deliveryTag,
-        public readonly bool $redelivered,
-        public readonly string $exchange,
-        public readonly string $routingKey,
+        public string $consumerTag,
+        public int $deliveryTag,
+        public bool $redelivered,
+        public string $exchange,
+        public string $routingKey,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

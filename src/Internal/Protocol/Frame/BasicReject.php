@@ -10,14 +10,14 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicReject implements Frame
+final readonly class BasicReject implements Frame
 {
     /**
      * @param non-negative-int $deliveryTag
      */
     public function __construct(
-        public readonly int $deliveryTag,
-        public readonly bool $requeue,
+        public int $deliveryTag,
+        public bool $requeue,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

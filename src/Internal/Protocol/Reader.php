@@ -11,18 +11,16 @@ use Thesis\ByteOrder\ReadFrom;
 /**
  * @internal
  */
-final class Reader
+final readonly class Reader
 {
     /** @var int */
-    private const HEADER_SIZE = 7;
+    private const int HEADER_SIZE = 7;
 
-    private readonly ReadFrom $reader;
+    private Io\Buffer $buffer;
 
-    private readonly Io\Buffer $buffer;
-
-    public function __construct(ReadFrom $reader)
-    {
-        $this->reader = $reader;
+    public function __construct(
+        private ReadFrom $reader,
+    ) {
         $this->buffer = Io\Buffer::empty();
     }
 

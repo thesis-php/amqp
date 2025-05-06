@@ -10,10 +10,10 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicRecover implements Frame
+final readonly class BasicRecover implements Frame
 {
     public function __construct(
-        public readonly bool $requeue,
+        public bool $requeue,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

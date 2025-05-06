@@ -10,18 +10,18 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicGetOk implements Frame
+final readonly class BasicGetOk implements Frame
 {
     /**
      * @param non-negative-int $deliveryTag
      * @param non-negative-int $messageCount
      */
     public function __construct(
-        public readonly int $deliveryTag,
-        public readonly bool $redelivered,
-        public readonly string $exchange,
-        public readonly string $routingKey,
-        public readonly int $messageCount,
+        public int $deliveryTag,
+        public bool $redelivered,
+        public string $exchange,
+        public string $routingKey,
+        public int $messageCount,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

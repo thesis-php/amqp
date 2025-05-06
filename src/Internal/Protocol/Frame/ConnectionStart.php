@@ -20,7 +20,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
  *     },
  * }
  */
-final class ConnectionStart implements Frame
+final readonly class ConnectionStart implements Frame
 {
     /**
      * @param non-negative-int $versionMajor
@@ -29,11 +29,11 @@ final class ConnectionStart implements Frame
      * @param list<string> $mechanisms
      */
     public function __construct(
-        public readonly int $versionMajor,
-        public readonly int $versionMinor,
-        public readonly array $serverProperties,
-        public readonly array $mechanisms = [],
-        public readonly string $locales = '',
+        public int $versionMajor,
+        public int $versionMinor,
+        public array $serverProperties,
+        public array $mechanisms = [],
+        public string $locales = '',
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

@@ -15,7 +15,7 @@ use Thesis\Amqp\Message;
  */
 final class FutureBoundedReturnListener
 {
-    public const TRACE_HEADER_KEY = 'X-Thesis-Mandatory-Id';
+    public const string TRACE_HEADER_KEY = 'X-Thesis-Mandatory-Id';
 
     /** @var array<non-empty-string, DeferredFuture<never>> */
     private array $futures = [];

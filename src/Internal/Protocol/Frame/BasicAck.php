@@ -10,14 +10,14 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicAck implements Frame
+final readonly class BasicAck implements Frame
 {
     /**
      * @param non-negative-int $deliveryTag
      */
     public function __construct(
-        public readonly int $deliveryTag,
-        public readonly bool $multiple,
+        public int $deliveryTag,
+        public bool $multiple,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

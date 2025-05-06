@@ -10,17 +10,17 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ExchangeDelete implements Frame
+final readonly class ExchangeDelete implements Frame
 {
     /**
      * @param non-empty-string $exchange
      * @param non-negative-int $reserved1
      */
     public function __construct(
-        public readonly string $exchange,
-        public readonly bool $ifUnused = false,
-        public readonly bool $noWait = false,
-        public readonly int $reserved1 = 0,
+        public string $exchange,
+        public bool $ifUnused = false,
+        public bool $noWait = false,
+        public int $reserved1 = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

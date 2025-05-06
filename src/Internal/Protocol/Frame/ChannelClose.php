@@ -10,9 +10,9 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ChannelClose implements Frame
+final readonly class ChannelClose implements Frame
 {
-    private const REPLYSUCCESS = 200;
+    private const int REPLYSUCCESS = 200;
 
     /**
      * @param non-negative-int $replyCode
@@ -20,10 +20,10 @@ final class ChannelClose implements Frame
      * @param non-negative-int $methodId
      */
     public function __construct(
-        public readonly int $replyCode = self::REPLYSUCCESS,
-        public readonly string $replyText = '',
-        public readonly int $classId = 0,
-        public readonly int $methodId = 0,
+        public int $replyCode = self::REPLYSUCCESS,
+        public string $replyText = '',
+        public int $classId = 0,
+        public int $methodId = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

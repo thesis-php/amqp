@@ -10,15 +10,15 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class BasicNack implements Frame
+final readonly class BasicNack implements Frame
 {
     /**
      * @param non-negative-int $deliveryTag
      */
     public function __construct(
-        public readonly int $deliveryTag,
-        public readonly bool $multiple,
-        public readonly bool $requeue,
+        public int $deliveryTag,
+        public bool $multiple,
+        public bool $requeue,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

@@ -8,15 +8,15 @@ namespace Thesis\Amqp;
  * @api
  * @template-implements \IteratorAggregate<PublishConfirmation>
  */
-final class PublishBatchConfirmation implements \IteratorAggregate
+final readonly class PublishBatchConfirmation implements \IteratorAggregate
 {
     /**
      * @param array<non-negative-int, PublishMessage> $messages
      * @param list<PublishConfirmation> $confirmations
      */
     public function __construct(
-        public readonly array $messages,
-        public readonly array $confirmations,
+        public array $messages,
+        public array $confirmations,
     ) {}
 
     public function await(): PublishBatchConfirmationResult

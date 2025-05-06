@@ -10,16 +10,16 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class QueuePurge implements Frame
+final readonly class QueuePurge implements Frame
 {
     /**
      * @param non-empty-string $queue
      * @param non-negative-int $reserved1
      */
     public function __construct(
-        public readonly string $queue,
-        public readonly bool $noWait = false,
-        public readonly int $reserved1 = 0,
+        public string $queue,
+        public bool $noWait = false,
+        public int $reserved1 = 0,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

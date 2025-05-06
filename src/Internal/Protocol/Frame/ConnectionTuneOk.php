@@ -10,7 +10,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 /**
  * @internal
  */
-final class ConnectionTuneOk implements Frame
+final readonly class ConnectionTuneOk implements Frame
 {
     /**
      * @param non-negative-int $channelMax
@@ -18,9 +18,9 @@ final class ConnectionTuneOk implements Frame
      * @param non-negative-int $heartbeat
      */
     public function __construct(
-        public readonly int $channelMax,
-        public readonly int $frameMax,
-        public readonly int $heartbeat,
+        public int $channelMax,
+        public int $frameMax,
+        public int $heartbeat,
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

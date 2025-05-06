@@ -12,10 +12,10 @@ use Composer\InstalledVersions;
 final class VersionProvider
 {
     /** @var non-empty-string */
-    private const DEFAULT_VERSION = 'dev';
+    private const string DEFAULT_VERSION = 'dev';
 
     /** @var non-empty-string */
-    private const PACKAGE_NAME = 'thesis/amqp';
+    private const string PACKAGE_NAME = 'thesis/amqp';
 
     /** @var ?non-empty-string */
     private static ?string $version = null;
