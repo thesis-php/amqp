@@ -962,7 +962,7 @@ $client->disconnect();
 #### explicit returns
 
 In AMQP messaging system it’s possible for a published message to have no destination. This is acceptable in some scenarios such as the [Publish-Subscribe](https://www.enterpriseintegrationpatterns.com/patterns/messaging/PublishSubscribeChannel.html) pattern, where it’s fine for events to go unhandled, but not in others.
-For example, in the `command` pattern every message is expected to be processed.
+For example, in the [Command](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CommandMessage.html) pattern every message is expected to be processed.
 
 To detect and react to such delivery failures, you must publish messages with the `mandatory` flag enabled. This tells the AMQP server to return any message that cannot be routed to at least one queue.
 
