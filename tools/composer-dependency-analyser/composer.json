@@ -1,11 +1,8 @@
 {
     "require-dev": {
-        "infection/infection": "^0.29.14"
+        "shipmonk/composer-dependency-analyser": "^1.8.2"
     },
     "config": {
-        "allow-plugins": {
-            "infection/extension-installer": true
-        },
         "bump-after-update": "dev",
         "platform": {
             "php": "8.3.17"

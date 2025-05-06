@@ -14,7 +14,7 @@
         },
         {
             "name": "Thesis Team",
-            "homepage": "https://github.com/orgs/thesisphp/people"
+            "homepage": "https://github.com/orgs/thesis-php/people"
         }
     ],
     "require": {
@@ -33,12 +33,10 @@
         "thesis/endian": "^0.1.0"
     },
     "require-dev": {
-        "bamarni/composer-bin-plugin": "^1.8",
-        "ergebnis/composer-normalize": "^2.45",
-        "phpunit/phpunit": "^11.5",
-        "symfony/var-dumper": "^7.2"
+        "bamarni/composer-bin-plugin": "^1.8.2",
+        "phpunit/phpunit": "^12.1.4",
+        "symfony/var-dumper": "^6.4.15 || ^7.2.6"
     },
-    "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
             "Thesis\\Amqp\\": "src/"
@@ -54,12 +52,11 @@
     },
     "config": {
         "allow-plugins": {
-            "bamarni/composer-bin-plugin": true,
-            "ergebnis/composer-normalize": true
+            "bamarni/composer-bin-plugin": true
         },
         "bump-after-update": "dev",
         "platform": {
-            "php": "8.3"
+            "php": "8.3.17"
         },
         "sort-packages": true
     },
@@ -71,21 +68,22 @@
         }
     },
     "scripts": {
+        "analyse-deps": "tools/composer-dependency-analyser/vendor/bin/composer-dependency-analyser",
         "check": [
             "@composer fixcs -- --dry-run",
             "@phpstan",
             "@composer validate",
             "@composer normalize --dry-run",
-            "@check-require",
-            "@check-unused",
+            "@analyse-deps",
             "@test"
         ],
-        "check-require": "tools/composer-require-checker/vendor/bin/composer-require-checker",
-        "check-unused": "tools/composer-unused/vendor/bin/composer-unused",
         "fixcs": "tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --verbose",
         "infection": "tools/infection/vendor/bin/infection --show-mutations",
+        "normalize": "@composer bin composer-normalize normalize --diff ../../composer.json",
         "phpstan": "tools/phpstan/vendor/bin/phpstan analyze",
         "pre-command-run": "mkdir -p var",
+        "psalm": "tools/psalm/vendor/bin/psalm --show-info --no-diff --no-cache",
+        "rector": "tools/rector/vendor/bin/rector process",
         "test": "phpunit"
     }
 }

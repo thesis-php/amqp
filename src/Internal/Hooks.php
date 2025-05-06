@@ -40,8 +40,8 @@ final class Hooks implements
         foreach ($frameTypes as $frameType) {
             $idx = \count($this->defers[$channelId][$frameType] ?? []);
 
-            $this->defers[$channelId][$frameType][] =
-                function (Protocol\Frame $frame) use ($channelId, $frameType, $idx, $subscriber): void {
+            $this->defers[$channelId][$frameType][]
+                = function (Protocol\Frame $frame) use ($channelId, $frameType, $idx, $subscriber): void {
                     /** @var T $frame */
                     $subscriber($frame);
                     /** @phpstan-ignore assign.propertyType */
@@ -62,9 +62,9 @@ final class Hooks implements
         $deferred = new DeferredFuture();
 
         $idx = \count($this->defers[$channelId][$frameType] ?? []);
-        $this->defers[$channelId][$frameType][] =
+        $this->defers[$channelId][$frameType][]
             /** @param T $frame */
-            function (Protocol\Frame $frame) use ($deferred, $channelId, $frameType, $idx): void {
+            = function (Protocol\Frame $frame) use ($deferred, $channelId, $frameType, $idx): void {
                 if (!$deferred->isComplete()) {
                     $deferred->complete($frame);
                 }

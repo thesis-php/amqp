@@ -5,7 +5,7 @@ parameters:
         - tests
         - examples
     checkBenevolentUnionTypes: true
-    editorUrl: '=>'
+    editorUrl: ''
     editorUrlTitle: '%%file%%:%%line%%'
     tmpDir: ./var/phpstan
     stubFiles:

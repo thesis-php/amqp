@@ -1,11 +1,12 @@
 {
     "require-dev": {
-        "icanhazstring/composer-unused": "^0.8.11"
+        "vimeo/psalm": "^6.10.3",
+        "typhoon/check-visibility-psalm-plugin": "^0.1.1"
     },
     "config": {
         "bump-after-update": "dev",
         "platform": {
-            "php": "8.3"
+            "php": "8.3.17"
         },
         "sort-packages": true
     }

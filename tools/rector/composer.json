@@ -1,11 +1,11 @@
 {
     "require-dev": {
-        "maglnet/composer-require-checker": "^4.14.0"
+        "rector/rector": "^2.0.15"
     },
     "config": {
         "bump-after-update": "dev",
         "platform": {
-            "php": "8.3"
+            "php": "8.3.17"
         },
         "sort-packages": true
     }
