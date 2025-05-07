@@ -30,6 +30,7 @@ final class DeliveryMessageTest extends TestCase
             ack: $operation,
             nack: $operation,
             reject: $operation,
+            reply: $operation,
             message: new Message('x'),
         );
 

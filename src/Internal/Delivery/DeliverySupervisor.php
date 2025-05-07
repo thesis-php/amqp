@@ -7,6 +7,7 @@ namespace Thesis\Amqp\Internal\Delivery;
 use Thesis\Amqp\Channel;
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Internal\Hooks;
+use Thesis\Amqp\Internal\MessageProperties;
 use Thesis\Amqp\Internal\Protocol\Frame;
 use Thesis\Amqp\Message;
 
@@ -175,11 +176,13 @@ final class DeliverySupervisor
 
         // You cannot call ack/nack/reject on a returned message.
         $noAction = static function (): void {};
+        $reply = $this->replier($this->header->properties) ?: $noAction;
 
         $delivery = new DeliveryMessage(
             ack: $this->return !== null ? $noAction : $this->channel->ack(...),
             nack: $this->return !== null ? $noAction : $this->channel->nack(...),
             reject: $this->return !== null ? $noAction : $this->channel->reject(...),
+            reply: $reply,
             message: new Message(
                 body: $this->message,
                 headers: $this->header->properties->headers,
@@ -231,5 +234,43 @@ final class DeliverySupervisor
     private function subscribe(string $frameType, \Closure $callback): void
     {
         $this->hooks->subscribe($this->channelId, $frameType, $callback);
+    }
+
+    /**
+     * @return ?\Closure(Message): void
+     */
+    private function replier(MessageProperties $properties): ?\Closure
+    {
+        $replyTo = $properties->replyTo ?: null;
+        if ($replyTo === null) {
+            return null;
+        }
+
+        $correlationId = $properties->correlationId ?: null;
+        if ($correlationId === null) {
+            return null;
+        }
+
+        return function (Message $message) use ($replyTo, $correlationId): void {
+            $this->channel->publish(
+                message: new Message(
+                    body: $message->body,
+                    headers: $message->headers,
+                    contentType: $message->contentType,
+                    contentEncoding: $message->contentEncoding,
+                    deliveryMode: $message->deliveryMode,
+                    priority: $message->priority,
+                    correlationId: $correlationId,
+                    replyTo: $replyTo,
+                    expiration: $message->expiration,
+                    messageId: $message->messageId,
+                    timestamp: $message->timestamp,
+                    type: $message->type,
+                    userId: $message->userId,
+                    appId: $message->appId,
+                ),
+                routingKey: $replyTo,
+            );
+        };
     }
 }

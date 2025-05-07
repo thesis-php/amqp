@@ -1041,4 +1041,35 @@ final class AmqpTest extends TestCase
 
         $channel->close();
     }
+
+    public function testRpc(): void
+    {
+        $channel = $this->client->channel();
+
+        $queue = $channel->queueDeclare();
+
+        $consumerTag = $channel->consume(
+            callback: static function (DeliveryMessage $delivery): void {
+                $delivery->reply(new Message("Request '{$delivery->message->body}' handled."));
+            },
+            queue: $queue->name,
+        );
+
+        $rpc = $this->client->rpc();
+
+        $received = [];
+        $expected = [];
+
+        for ($i = 0; $i < 100; ++$i) {
+            $received[] = $rpc->request(new Message("Request#{$i}"), routingKey: $queue->name)->body;
+            $expected[] = "Request 'Request#{$i}' handled.";
+        }
+
+        self::assertCount(100, $expected);
+        self::assertSame($expected, $received);
+        self::assertSame(0, $channel->queueDelete($queue->name));
+
+        $channel->cancel($consumerTag);
+        $channel->close();
+    }
 }

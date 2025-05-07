@@ -15,6 +15,7 @@ use Thesis\Amqp\Internal\Properties;
 use Thesis\Amqp\Internal\Protocol;
 use Thesis\Amqp\Internal\Protocol\Auth;
 use Thesis\Amqp\Internal\Protocol\Frame;
+use Thesis\Amqp\Internal\Rpc;
 use function Amp\async;
 
 /**
@@ -26,6 +27,13 @@ final class Client
 
     /** @var ?Future<void> */
     private ?Future $connectionFuture = null;
+
+    private readonly Rpc\HandlerFactory $rpcFactory;
+
+    private ?Rpc\Handler $rpc = null;
+
+    /** @var ?Future<Rpc\Handler> */
+    private ?Future $rpcFuture = null;
 
     /** @var non-negative-int */
     private int $channelId = 1;
@@ -42,6 +50,7 @@ final class Client
     ) {
         $this->properties = Properties::createDefault();
         $this->hooks = Hooks::create();
+        $this->rpcFactory = new Rpc\HandlerFactory($this);
     }
 
     /**
@@ -90,6 +99,7 @@ final class Client
 
             $this->connectionClose($replyCode, $replyText, $cancellation);
             $this->connection()->close();
+            $this->rpc?->close();
         } finally {
             $disconnecting = false;
 
@@ -114,6 +124,23 @@ final class Client
             $this->properties,
             $this->hooks,
         );
+    }
+
+    public function rpc(ChannelRpcConfig $config = new ChannelRpcConfig()): ChannelRpc
+    {
+        $this->rpcFuture?->await();
+
+        if ($this->rpc !== null) {
+            return $this->rpc;
+        }
+
+        $this->rpcFuture ??= async($this->rpcFactory->create(...), $config);
+
+        try {
+            return $this->rpc = $this->rpcFuture->await();
+        } finally {
+            $this->rpcFuture = null;
+        }
     }
 
     /**

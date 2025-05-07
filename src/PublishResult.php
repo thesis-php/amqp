@@ -14,4 +14,11 @@ enum PublishResult
     case Nacked;
     case Canceled;
     case Waiting;
+
+    public function ensurePublished(): void
+    {
+        if ($this !== self::Acked) {
+            throw new \RuntimeException('Failed to publish message.');
+        }
+    }
 }

@@ -12,6 +12,7 @@ use function Amp\async;
  * @phpstan-type Ack = \Closure(DeliveryMessage, bool): void
  * @phpstan-type Nack = \Closure(DeliveryMessage, bool, bool): void
  * @phpstan-type Reject = \Closure(DeliveryMessage, bool): void
+ * @phpstan-type Reply = \Closure(Message): void
  */
 final class DeliveryMessage
 {
@@ -24,12 +25,14 @@ final class DeliveryMessage
      * @param Ack $ack
      * @param Nack $nack
      * @param Reject $reject
+     * @param Reply $reply
      * @param non-negative-int $deliveryTag
      */
     public function __construct(
         private readonly \Closure $ack,
         private readonly \Closure $nack,
         private readonly \Closure $reject,
+        private readonly \Closure $reply,
         public readonly Message $message,
         public readonly string $exchange = '',
         public readonly string $routingKey = '',
@@ -54,6 +57,11 @@ final class DeliveryMessage
         $this->process(fn() => ($this->reject)($this, $requeue));
     }
 
+    public function reply(Message $message): void
+    {
+        $this->process(fn() => ($this->reply)($message));
+    }
+
     /**
      * @param \Closure(): void $hook
      */
@@ -62,11 +70,9 @@ final class DeliveryMessage
         $this->processedFuture?->await();
 
         if (!$this->processed) {
-            try {
-                /** @var Future<void> $future */
-                $future = async($hook);
-                $this->processedFuture = $future;
+            $this->processedFuture ??= async($hook);
 
+            try {
                 $this->processedFuture->await();
             } finally {
                 $this->processedFuture = null;
