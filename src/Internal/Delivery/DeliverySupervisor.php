@@ -176,13 +176,12 @@ final class DeliverySupervisor
 
         // You cannot call ack/nack/reject on a returned message.
         $noAction = static function (): void {};
-        $reply = $this->replier($this->header->properties) ?: $noAction;
 
         $delivery = new DeliveryMessage(
             ack: $this->return !== null ? $noAction : $this->channel->ack(...),
             nack: $this->return !== null ? $noAction : $this->channel->nack(...),
             reject: $this->return !== null ? $noAction : $this->channel->reject(...),
-            reply: $reply,
+            reply: $this->replier($this->header->properties) ?: $noAction,
             message: new Message(
                 body: $this->message,
                 headers: $this->header->properties->headers,
