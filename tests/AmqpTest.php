@@ -1053,6 +1053,7 @@ final class AmqpTest extends TestCase
                 $delivery->reply(new Message("Request '{$delivery->message->body}' handled."));
             },
             queue: $queue->name,
+            noAck: true,
         );
 
         $rpc = $this->client->rpc();

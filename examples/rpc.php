@@ -19,6 +19,7 @@ $consumerTag = $channel->consume(
         $delivery->reply(new Message("Request '{$delivery->message->body}' handled."));
     },
     queue: $queue->name,
+    noAck: true,
 );
 
 $rpc = $client->rpc();
