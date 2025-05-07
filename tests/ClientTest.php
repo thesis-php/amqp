@@ -29,7 +29,6 @@ final class ClientTest extends TestCase
         $channel->confirmSelect();
     }
 
-    #[DoesNotPerformAssertions]
     public function testConnectDisconnectOnDestructor(): void
     {
         if (\PHP_VERSION_ID < 80400) {
@@ -37,8 +36,11 @@ final class ClientTest extends TestCase
         }
 
         $client = new Client(Config::default());
-        $client->channel();
+        $channel = $client->channel();
 
         unset($client);
+
+        self::expectException(ConnectionIsClosed::class);
+        $channel->confirmSelect();
     }
 }

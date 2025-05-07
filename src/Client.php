@@ -133,25 +133,30 @@ final class Client
      */
     private function openChannel(int $channelId, Cancellation $cancellation = new NullCancellation()): void
     {
-        $this->connection()->writeFrame(Protocol\Method::channelOpen($channelId));
+        $connection = $this->connection();
+
+        $connection->writeFrame(Protocol\Method::channelOpen($channelId));
 
         $this->await(Frame\ChannelOpenOkFrame::class, $channelId, $cancellation);
+
+        $hooks = $this->hooks;
+        $channels = &$this->channels;
 
         $this->hooks->anyOf(
             $channelId,
             [Frame\ChannelCloseOk::class, Frame\ChannelClose::class],
-            function (Frame\ChannelCloseOk|Frame\ChannelClose $frame) use ($channelId): void {
-                $channel = $this->channels[$channelId] ?? null;
+            static function (Frame\ChannelCloseOk|Frame\ChannelClose $frame) use ($channelId, $hooks, &$channels, $connection): void {
+                $channel = $channels[$channelId] ?? null;
 
                 if ($channel !== null) {
-                    unset($this->channels[$channelId]);
+                    unset($channels[$channelId]);
 
                     if ($frame instanceof Frame\ChannelClose) {
-                        $this->connection()->writeFrame(Protocol\Method::channelCloseOk($channelId));
+                        $connection->writeFrame(Protocol\Method::channelCloseOk($channelId));
                         $channel->abandon(new Exception\ChannelWasClosed($frame->replyCode, $frame->replyText));
                     }
 
-                    $this->hooks->unsubscribe($channelId);
+                    $hooks->unsubscribe($channelId);
                 }
             },
         );
@@ -226,21 +231,23 @@ final class Client
 
         $connection->ioLoop($this->hooks);
 
-        $this->hooks->oneshot(0, Frame\ConnectionClose::class)->map(function (Frame\ConnectionClose $close): void {
-            $this->connection()->writeFrame(Protocol\Method::connectionCloseOk());
-            $this->connection()->close();
+        $channels = &$this->channels;
+
+        $this->hooks->anyOf(0, Frame\ConnectionClose::class, static function (Frame\ConnectionClose $close) use (&$channels, &$connection): void {
+            $connection?->writeFrame(Protocol\Method::connectionCloseOk());
+            $connection?->close();
 
             $error = Exception\ConnectionWasClosed::byServer($close->replyCode, $close->replyText);
 
-            foreach ($this->channels as $channel) {
+            foreach ($channels as $channel) {
                 $channel->abandon($error);
             }
 
-            $this->channels = [];
-            $this->connection = null;
+            $channels = [];
+            $connection = null;
         });
 
-        return $connection;
+        return $connection ?: throw new Exception\ConnectionIsClosed();
     }
 
     private function createConnection(): AmqpConnection

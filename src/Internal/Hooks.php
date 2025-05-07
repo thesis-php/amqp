@@ -32,11 +32,15 @@ final class Hooks implements
     /**
      * @template T of Protocol\Frame
      * @param non-negative-int $channelId
-     * @param non-empty-list<class-string<T>> $frameTypes
+     * @param non-empty-list<class-string<T>>|class-string<T> $frameTypes
      * @param callable(T): void $subscriber
      */
-    public function anyOf(int $channelId, array $frameTypes, callable $subscriber): void
+    public function anyOf(int $channelId, array|string $frameTypes, callable $subscriber): void
     {
+        if (!\is_array($frameTypes)) {
+            $frameTypes = [$frameTypes];
+        }
+
         foreach ($frameTypes as $frameType) {
             $idx = \count($this->defers[$channelId][$frameType] ?? []);
 
