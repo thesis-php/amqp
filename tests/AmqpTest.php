@@ -178,6 +178,9 @@ final class AmqpTest extends TestCase
         self::expectNotToPerformAssertions();
     }
 
+    /**
+     * @param int<0, 65535> $channelMax
+     */
     #[TestWith([10])]
     #[TestWith([15])]
     #[TestWith([20])]

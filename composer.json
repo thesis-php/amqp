@@ -21,6 +21,7 @@
         "php": "^8.3",
         "ext-filter": "*",
         "amphp/amp": "^3.0",
+        "amphp/byte-stream": "^2.1",
         "amphp/pipeline": "^1.2",
         "amphp/socket": "^2.3",
         "revolt/event-loop": "^1.0",

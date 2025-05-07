@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Io;
 
+use Amp\ByteStream\ClosedException;
+use Thesis\Amqp\Exception\ConnectionIsClosed;
 use Thesis\Amqp\Exception\UnknownValueType;
 use Thesis\Amqp\Internal\Protocol\Type;
 use Thesis\ByteWriter\Writer;
@@ -157,8 +159,12 @@ final class Buffer implements
 
     public function writeTo(Writer $writer): void
     {
-        if (($v = $this->reset()) !== '') {
-            $writer->write($v);
+        try {
+            if (($v = $this->reset()) !== '') {
+                $writer->write($v);
+            }
+        } catch (ClosedException) {
+            throw new ConnectionIsClosed();
         }
     }
 
