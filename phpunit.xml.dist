@@ -12,7 +12,6 @@
     <php>
         <ini name="display_errors" value="1"/>
         <ini name="error_reporting" value="-1"/>
-        <env name="THESIS_AMQP_DSN" value="amqp://thesis:secret@localhost:5673/"/>
     </php>
 
     <testsuites>

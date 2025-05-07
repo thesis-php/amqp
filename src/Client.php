@@ -24,8 +24,11 @@ final class Client
 {
     private ?AmqpConnection $connection = null;
 
-    /** @var ?Future<void> */
+    /** @var ?Future<AmqpConnection> */
     private ?Future $connectionFuture = null;
+
+    /** @var ?Future<void> */
+    private ?Future $disconnectionFuture = null;
 
     /** @var non-negative-int */
     private int $channelId = 1;
@@ -55,16 +58,10 @@ final class Client
             return;
         }
 
-        /** @var Future<void> $future */
-        $future = async($this->doConnect(...));
-        $this->connectionFuture = $future;
+        $this->connectionFuture ??= async($this->doConnect(...));
 
         try {
-            $this->connectionFuture->await();
-        } catch (\Throwable $e) {
-            $this->connection = null;
-
-            throw $e;
+            $this->connection = $this->connectionFuture->await();
         } finally {
             $this->connectionFuture = null;
         }
@@ -76,25 +73,28 @@ final class Client
      */
     public function disconnect(int $replyCode = 200, string $replyText = '', Cancellation $cancellation = new NullCancellation()): void
     {
-        static $disconnecting = false;
-        if ($disconnecting || $this->connection === null) {
+        $this->disconnectionFuture?->await();
+
+        if ($this->connection === null) {
             return;
         }
 
-        $disconnecting = true;
-
-        try {
+        $this->disconnectionFuture ??= async(function () use ($replyCode, $replyText, $cancellation): void {
             foreach ($this->channels as $channel) {
                 $channel->close($replyCode, $replyText);
             }
 
             $this->connectionClose($replyCode, $replyText, $cancellation);
             $this->connection()->close();
-        } finally {
-            $disconnecting = false;
 
             $this->channels = [];
             $this->connection = null;
+        });
+
+        try {
+            $this->disconnectionFuture->await();
+        } finally {
+            $this->disconnectionFuture = null;
         }
     }
 
@@ -189,13 +189,13 @@ final class Client
         return $this->connection ?: throw new Exception\ConnectionIsClosed();
     }
 
-    private function doConnect(): void
+    private function doConnect(): AmqpConnection
     {
-        $this->connection = $this->createConnection();
+        $connection = $this->createConnection();
 
-        $start = $this->connection->rpc(Frame\ProtocolHeader::frame, Frame\ConnectionStart::class);
+        $start = $connection->rpc(Frame\ProtocolHeader::frame, Frame\ConnectionStart::class);
 
-        $tune = $this->connection->rpc(
+        $tune = $connection->rpc(
             Protocol\Method::connectionStartOk($this->properties->toArray(), Auth\Mechanism::select(
                 $this->config->sasl(),
                 $start->mechanisms,
@@ -209,22 +209,22 @@ final class Client
             $this->config->frameMax($tune->frameMax),
         ];
 
-        $this->connection->rpc(
+        $connection->rpc(
             Protocol\Method::connectionTuneOk($channelMax, $frameMax, $heartbeat),
         );
 
         $this->properties->tune($channelMax, $frameMax);
 
         if ($heartbeat > 0) {
-            $this->connection->heartbeat($heartbeat);
+            $connection->heartbeat($heartbeat);
         }
 
-        $this->connection->rpc(
+        $connection->rpc(
             Protocol\Method::connectionOpen($this->config->vhost),
             Frame\ConnectionOpenOk::class,
         );
 
-        $this->connection->ioLoop($this->hooks);
+        $connection->ioLoop($this->hooks);
 
         $this->hooks->oneshot(0, Frame\ConnectionClose::class)->map(function (Frame\ConnectionClose $close): void {
             $this->connection()->writeFrame(Protocol\Method::connectionCloseOk());
@@ -239,6 +239,8 @@ final class Client
             $this->channels = [];
             $this->connection = null;
         });
+
+        return $connection;
     }
 
     private function createConnection(): AmqpConnection
