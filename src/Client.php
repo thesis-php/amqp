@@ -62,11 +62,11 @@ final class Client
         string $replyText = '',
         ?Cancellation $cancellation = null,
     ): void {
-        if ($this->connection === null) {
+        $connection = $this->connection?->await($cancellation);
+
+        if ($connection === null) {
             return;
         }
-
-        $connection = $this->connection->await($cancellation);
 
         $this->disconnection ??= new Sync\Once(function () use ($connection, $replyCode, $replyText, $cancellation): void {
             $this->channelFactory->close($replyCode, $replyText);
