@@ -6,6 +6,7 @@ namespace Thesis\Amqp;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Thesis\Amqp\Exception\ConnectionIsClosed;
 
@@ -29,12 +30,9 @@ final class ClientTest extends TestCase
         $channel->confirmSelect();
     }
 
+    #[RequiresPhp('8.4')]
     public function testConnectDisconnectOnDestructor(): void
     {
-        if (\PHP_VERSION_ID < 80400) {
-            self::markTestSkipped('php 8.4 is required to run this test.');
-        }
-
         $client = new Client(Config::default());
         $channel = $client->channel();
 
