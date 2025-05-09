@@ -62,8 +62,8 @@ final class Channel
     ) {
         $this->supervisor = new DeliverySupervisor($this, $this->hooks, $this->channelId);
         $this->consumerTags = new ConsumerTagGenerator();
-        $this->consumer = Consumer::create($this->supervisor, $this);
-        $this->receiver = Receiver::create($this->supervisor);
+        $this->consumer = new Consumer($this->supervisor, $this);
+        $this->receiver = new Receiver($this->supervisor);
         $this->returns = new Returns\ReturnListener($this->supervisor);
         $this->boundedReturns = new Returns\FutureBoundedReturnListener($this->supervisor);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
