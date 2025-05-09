@@ -55,9 +55,9 @@ final class DeliveryMessage
         $this->process(fn() => ($this->reject)($this, $requeue), $cancellation);
     }
 
-    public function reply(Message $message): void
+    public function reply(Message $message, ?Cancellation $cancellation = null): void
     {
-        $this->process(fn() => ($this->reply)($message));
+        $this->process(fn() => ($this->reply)($message), $cancellation);
     }
 
     /**

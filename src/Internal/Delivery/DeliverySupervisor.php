@@ -181,7 +181,7 @@ final class DeliverySupervisor
         \assert($this->delivery !== null || $this->return !== null || $this->get !== null, 'delivery, return or get must not be empty.');
         \assert($this->header !== null, 'header must not be empty.');
 
-        // You cannot call ack/nack/reject on a returned message.
+        // We cannot call ack/nack/reject on a returned message.
         $noAction = static function (): void {};
 
         $channel = $this->channel();
@@ -190,6 +190,7 @@ final class DeliverySupervisor
             ack: $this->return !== null ? $noAction : $channel->ack(...),
             nack: $this->return !== null ? $noAction : $channel->nack(...),
             reject: $this->return !== null ? $noAction : $channel->reject(...),
+            reply: $this->replier($this->header->properties, $channel) ?: $noAction,
             message: new Message(
                 body: $this->message,
                 headers: $this->header->properties->headers,
@@ -243,15 +244,10 @@ final class DeliverySupervisor
         $this->hooks->subscribe($this->channelId, $frameType, $callback);
     }
 
-    private function channel(): Channel
-    {
-        return $this->weakChannel->get() ?? throw new \LogicException('Channel has been garbage collected.');
-    }
-
     /**
      * @return ?\Closure(Message): void
      */
-    private function replier(MessageProperties $properties): ?\Closure
+    private function replier(MessageProperties $properties, Channel $channel): ?\Closure
     {
         $replyTo = $properties->replyTo ?? null;
         if ($replyTo === null) {
@@ -263,8 +259,8 @@ final class DeliverySupervisor
             return null;
         }
 
-        return function (Message $message) use ($replyTo, $correlationId): void {
-            $this->channel->publish(
+        return static function (Message $message) use ($channel, $replyTo, $correlationId): void {
+            $channel->publish(
                 message: new Message(
                     body: $message->body,
                     headers: $message->headers,
@@ -284,5 +280,10 @@ final class DeliverySupervisor
                 routingKey: $replyTo,
             );
         };
+    }
+
+    private function channel(): Channel
+    {
+        return $this->weakChannel->get() ?? throw new \LogicException('Channel has been garbage collected.');
     }
 }
