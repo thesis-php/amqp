@@ -7,6 +7,7 @@ namespace Thesis\Amqp;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\RequiresPhp;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use Thesis\Amqp\Exception\ConnectionIsClosed;
 
@@ -28,6 +29,21 @@ final class ClientTest extends TestCase
 
         self::expectException(ConnectionIsClosed::class);
         $channel->confirmSelect();
+    }
+
+    #[RunInSeparateProcess]
+    public function testGarbageCollection(): void
+    {
+        gc_disable();
+        $client = new Client(Config::default());
+        $channel = $client->channel();
+        $weakClient = \WeakReference::create($client);
+        $weakChannel = \WeakReference::create($channel);
+
+        unset($client, $channel);
+
+        self::assertTrue($weakClient->get() === null, 'Client has circular references and cannot be garbage collected');
+        self::assertTrue($weakChannel->get() === null, 'Channel has circular references and cannot be garbage collected');
     }
 
     #[RequiresPhp('8.4')]

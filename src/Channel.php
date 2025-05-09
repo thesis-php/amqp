@@ -62,7 +62,7 @@ final class Channel
     ) {
         $this->supervisor = new DeliverySupervisor($this, $this->hooks, $this->channelId);
         $this->consumerTags = new ConsumerTagGenerator();
-        $this->consumer = new Consumer($this->supervisor, $this);
+        $this->consumer = new Consumer($this->supervisor);
         $this->receiver = new Receiver($this->supervisor);
         $this->returns = new Returns\ReturnListener($this->supervisor);
         $this->boundedReturns = new Returns\FutureBoundedReturnListener($this->supervisor);
