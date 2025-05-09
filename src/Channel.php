@@ -25,6 +25,7 @@ use Thesis\Amqp\Internal\Protocol;
 use Thesis\Amqp\Internal\Protocol\Frame;
 use Thesis\Amqp\Internal\Returns;
 use Thesis\Sync;
+use function Amp\weakClosure;
 
 /**
  * @api
@@ -778,7 +779,7 @@ final class Channel
      */
     public function close(int $replyCode = 200, string $replyText = '', ?Cancellation $cancellation = null): void
     {
-        ($this->closed ??= new Sync\Once(fn(): bool => $this->doClose($replyCode, $replyText)))->await($cancellation);
+        ($this->closed ??= new Sync\Once(weakClosure(fn(): bool => $this->doClose($replyCode, $replyText))))->await($cancellation);
     }
 
     /**
@@ -850,11 +851,11 @@ final class Channel
      */
     private function doClose(int $replyCode = 200, string $replyText = ''): bool
     {
+        $this->supervisor->stop();
+
         $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
 
         $this->await(Frame\ChannelCloseOk::class);
-
-        $this->supervisor->stop();
 
         return true;
     }
