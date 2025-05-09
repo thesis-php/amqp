@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp;
 
+use Thesis\Time\TimeSpan;
+
 /**
  * @api
  */
@@ -22,7 +24,7 @@ final readonly class Message
         public ?int $priority = null,
         public ?string $correlationId = null,
         public ?string $replyTo = null,
-        public ?string $expiration = null,
+        public ?TimeSpan $expiration = null,
         public ?string $messageId = null,
         public ?\DateTimeImmutable $timestamp = null,
         public ?string $type = null,

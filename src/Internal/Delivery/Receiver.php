@@ -12,42 +12,23 @@ use Thesis\Amqp\DeliveryMessage;
  */
 final readonly class Receiver
 {
-    public static function create(DeliverySupervisor $supervisor): self
-    {
-        $receiver = new self($supervisor);
-        $receiver->run();
+    /** @var Pipeline\ConcurrentIterator<null|DeliveryMessage> */
+    private Pipeline\ConcurrentIterator $iterator;
 
-        return $receiver;
+    public function __construct(DeliverySupervisor $supervisor)
+    {
+        /** @var Pipeline\Queue<null|DeliveryMessage> $queue */
+        $queue = new Pipeline\Queue(bufferSize: 1);
+        $this->iterator = $queue->iterate();
+
+        $supervisor->addGetListener($queue->push(...));
+        $supervisor->addShutdownListener($queue->complete(...));
     }
 
     public function receive(): ?DeliveryMessage
     {
-        if (!$this->iterator->continue()) {
-            return null;
-        }
-
-        return $this->iterator->getValue();
-    }
-
-    /** @var Pipeline\ConcurrentIterator<null|DeliveryMessage> */
-    private Pipeline\ConcurrentIterator $iterator;
-
-    /** @var Pipeline\Queue<null|DeliveryMessage> */
-    private Pipeline\Queue $queue;
-
-    private function __construct(
-        private DeliverySupervisor $supervisor,
-    ) {
-        /** @var Pipeline\Queue<null|DeliveryMessage> $queue */
-        $queue = new Pipeline\Queue(bufferSize: 1);
-
-        $this->queue = $queue;
-        $this->iterator = $queue->iterate();
-    }
-
-    private function run(): void
-    {
-        $this->supervisor->addGetListener($this->queue->push(...));
-        $this->supervisor->addShutdownListener($this->queue->complete(...));
+        return $this->iterator->continue()
+            ? $this->iterator->getValue()
+            : null;
     }
 }

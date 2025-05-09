@@ -20,7 +20,7 @@
         </testsuite>
     </testsuites>
 
-    <source restrictNotices="true" restrictWarnings="true">
+    <source restrictNotices="true" restrictWarnings="true" ignoreIndirectDeprecations="true">
         <include>
             <directory>src</directory>
         </include>

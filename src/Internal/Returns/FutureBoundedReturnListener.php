@@ -46,10 +46,6 @@ final class FutureBoundedReturnListener
                 }
             }
         });
-
-        $this->supervisor->addShutdownListener(static function () use (&$futures): void {
-            $futures = [];
-        });
     }
 
     /**
