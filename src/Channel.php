@@ -11,6 +11,7 @@ use Thesis\Amqp\Internal\Batch\BatchConsumer;
 use Thesis\Amqp\Internal\Batch\ConsumeBatchOptions;
 use Thesis\Amqp\Internal\Cancellation\CancellationStorage;
 use Thesis\Amqp\Internal\Cancellation\Canceller;
+use Thesis\Amqp\Internal\ChannelAtomicGet;
 use Thesis\Amqp\Internal\ChannelMode;
 use Thesis\Amqp\Internal\ConfirmationListener;
 use Thesis\Amqp\Internal\Delivery\Consumer;
@@ -39,13 +40,13 @@ final class Channel
 
     private readonly Consumer $consumer;
 
-    private readonly Receiver $receiver;
-
     private readonly ConsumerTagGenerator $consumerTags;
 
     private readonly ConfirmationListener $confirms;
 
     private readonly CancellationStorage $cancellations;
+
+    private readonly ChannelAtomicGet $gets;
 
     private ChannelMode $mode = ChannelMode::Regular;
 
@@ -63,7 +64,7 @@ final class Channel
         $this->supervisor = new DeliverySupervisor($this, $this->hooks, $this->channelId);
         $this->consumerTags = new ConsumerTagGenerator();
         $this->consumer = Consumer::create($this->supervisor, $this);
-        $this->receiver = Receiver::create($this->supervisor);
+        $this->gets = new ChannelAtomicGet(Receiver::create($this->supervisor), $this->connection, $this->channelId);
         $this->returns = new Returns\ReturnListener($this->supervisor);
         $this->boundedReturns = new Returns\FutureBoundedReturnListener($this->supervisor);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
@@ -149,24 +150,9 @@ final class Channel
     /**
      * @throws \Throwable
      */
-    public function get(string $queue = '', bool $noAck = false): ?DeliveryMessage
+    public function get(string $queue = '', bool $noAck = false, ?Cancellation $cancellation = null): ?DeliveryMessage
     {
-        static $permit = true;
-        if (!$permit) {
-            throw Exception\OperationNotPermitted::forGet($this->channelId);
-        }
-
-        $permit = false;
-
-        $this->connection->writeFrame(Protocol\Method::basicGet(
-            channelId: $this->channelId,
-            queue: $queue,
-            noAck: $noAck,
-        ));
-
-        [$delivery, $permit] = [$this->receiver->receive(), true];
-
-        return $delivery;
+        return $this->gets->get($queue, $noAck, $cancellation);
     }
 
     /**
