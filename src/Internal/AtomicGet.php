@@ -14,7 +14,7 @@ use function Amp\async;
 /**
  * @internal
  */
-final class ChannelAtomicGet
+final class AtomicGet
 {
     /** @var ?Future<null|DeliveryMessage> */
     private ?Future $future = null;
@@ -28,7 +28,7 @@ final class ChannelAtomicGet
         private readonly int $channelId,
     ) {}
 
-    public function get(string $queue = '', bool $noAck = false, ?Cancellation $cancellation = null): ?DeliveryMessage
+    public function receive(string $queue = '', bool $noAck = false, ?Cancellation $cancellation = null): ?DeliveryMessage
     {
         while ($this->future !== null) {
             $this->future->await($cancellation);

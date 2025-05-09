@@ -7,11 +7,11 @@ namespace Thesis\Amqp;
 use Amp\Cancellation;
 use Amp\NullCancellation;
 use Revolt\EventLoop;
+use Thesis\Amqp\Internal\AtomicGet;
 use Thesis\Amqp\Internal\Batch\BatchConsumer;
 use Thesis\Amqp\Internal\Batch\ConsumeBatchOptions;
 use Thesis\Amqp\Internal\Cancellation\CancellationStorage;
 use Thesis\Amqp\Internal\Cancellation\Canceller;
-use Thesis\Amqp\Internal\ChannelAtomicGet;
 use Thesis\Amqp\Internal\ChannelMode;
 use Thesis\Amqp\Internal\ConfirmationListener;
 use Thesis\Amqp\Internal\Delivery\Consumer;
@@ -46,7 +46,7 @@ final class Channel
 
     private readonly CancellationStorage $cancellations;
 
-    private readonly ChannelAtomicGet $gets;
+    private readonly AtomicGet $get;
 
     private ChannelMode $mode = ChannelMode::Regular;
 
@@ -64,9 +64,7 @@ final class Channel
         $this->supervisor = new DeliverySupervisor($this, $this->hooks, $this->channelId);
         $this->consumerTags = new ConsumerTagGenerator();
         $this->consumer = new Consumer($this->supervisor, $this);
-        $this->receiver = new Receiver($this->supervisor);
-        $this->consumer = Consumer::create($this->supervisor, $this);
-        $this->gets = new ChannelAtomicGet(Receiver::create($this->supervisor), $this->connection, $this->channelId);
+        $this->get = new AtomicGet(new Receiver($this->supervisor), $this->connection, $this->channelId);
         $this->returns = new Returns\ReturnListener($this->supervisor);
         $this->boundedReturns = new Returns\FutureBoundedReturnListener($this->supervisor);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
@@ -154,7 +152,7 @@ final class Channel
      */
     public function get(string $queue = '', bool $noAck = false, ?Cancellation $cancellation = null): ?DeliveryMessage
     {
-        return $this->gets->get($queue, $noAck, $cancellation);
+        return $this->get->receive($queue, $noAck, $cancellation);
     }
 
     /**
