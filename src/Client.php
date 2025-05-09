@@ -10,7 +10,9 @@ use Thesis\Amqp\Internal\Io\AmqpConnection;
 use Thesis\Amqp\Internal\Io\AmqpConnectionFactory;
 use Thesis\Amqp\Internal\Io\ChannelFactory;
 use Thesis\Amqp\Internal\Properties;
+use Thesis\Amqp\Internal\Rpc;
 use Thesis\Sync;
+use function Amp\weakClosure;
 
 /**
  * @api
@@ -26,6 +28,9 @@ final class Client
 
     /** @var ?Sync\Once<void> */
     private ?Sync\Once $disconnection = null;
+
+    /** @var ?Sync\Once<RpcHandler> */
+    private ?Sync\Once $rpc = null;
 
     private readonly Properties $properties;
 
@@ -71,6 +76,8 @@ final class Client
         $this->disconnection ??= new Sync\Once(function () use ($connection, $replyCode, $replyText, $cancellation): void {
             $this->channelFactory->close($replyCode, $replyText);
             $this->connectionFactory->close($connection, $replyCode, $replyText, $cancellation);
+            $this->rpc?->await()->close();
+
             $this->connection = null;
         });
 
@@ -87,6 +94,14 @@ final class Client
             $this->connection($cancellation),
             $cancellation,
         );
+    }
+
+    public function rpc(
+        RpcConfig $config = new RpcConfig(),
+        ?Cancellation $cancellation = null,
+    ): RpcHandler {
+        return ($this->rpc ??= new Sync\Once(weakClosure(fn(): RpcHandler => Rpc\createHandler($this, $config, $cancellation))))
+            ->await($cancellation);
     }
 
     private function connection(?Cancellation $cancellation = null): AmqpConnection

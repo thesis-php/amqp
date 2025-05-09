@@ -7,7 +7,7 @@ namespace Thesis\Amqp;
 /**
  * @api
  */
-final readonly class ChannelRpcConfig
+final readonly class RpcConfig
 {
     /**
      * @param float $timeout in seconds

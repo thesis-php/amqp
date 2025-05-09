@@ -39,6 +39,7 @@ Pure asynchronous (fiber based) strictly typed full-featured PHP driver for AMQP
   - [confirms](#confirms)
   - [returns](#returns)
   - [explicit returns](#explicit-returns)
+  - [rpc](#rpc)
 - [License](#license)
 
 ### Installation
@@ -1004,6 +1005,66 @@ if ($confirmation?->await() === PublishResult::Unrouted) {
 ```
 
 > ⚠️ Important: This mechanism only works if `publisher confirms` are enabled. Without them the library cannot track which messages were successfully published to queues, because no frame will receive.
+
+#### rpc
+
+Although AMQP doesn't provide a native way to perform RPC, there is a documented algorithm that uses the `reply-to` and `correlation-id` headers to implement it.
+Since this algorithm can be difficult to implement for inexperienced users — especially given the asynchronous nature of our driver — our library handles it for you.
+An example of how to use it is shown below:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Amp\TimeoutCancellation;
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Config;
+use Thesis\Amqp\Message;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$client = new Client(Config::default());
+$rpc = $client->rpc();
+
+for ($i = 0; $i < 100; ++$i) {
+    dump($rpc->request(new Message("Request#{$i}"), routingKey: 'some_queue', cancellation: new TimeoutCancellation(2))->body);
+}
+```
+
+Our `RpcHandler` will create a temporary queue named like `thesis.rpc.{random}` and include its name in the `reply-to` header, along with a unique identifier in the `correlation-id` header, which your consumers should use to send the response.
+In this case, it's more accurate to refer to your consumers as `responders`. These responders should consume messages from the durable `some_queue` in `noAck` mode and send responses.
+
+To avoid manually filling in response headers or figuring out the correct reply queue, you can use the `DeliveryMessage::reply()` method, which will automatically send the message back to the appropriate queue. Here's how your responders should look:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Config;
+use Thesis\Amqp\DeliveryMessage;
+use Thesis\Amqp\Message;
+use function Amp\trapSignal;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$client = new Client(Config::default());
+$channel = $client->channel();
+
+$channel->consume(
+    callback: static function (DeliveryMessage $delivery): void {
+        $delivery->reply(new Message("Request '{$delivery->message->body}' handled."));
+    },
+    queue: 'some_queue',
+    noAck: true,
+);
+
+trapSignal([\SIGINT, \SIGTERM]);
+
+$client->disconnect();
+```
 
 ## License
 

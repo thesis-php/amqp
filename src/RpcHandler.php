@@ -2,25 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Amqp\Internal\Rpc;
+namespace Thesis\Amqp;
 
 use Amp\Cancellation;
 use Amp\DeferredFuture;
 use Amp\TimeoutCancellation;
-use Thesis\Amqp\Channel;
-use Thesis\Amqp\ChannelRpc;
-use Thesis\Amqp\ChannelRpcConfig;
-use Thesis\Amqp\DeliveryMessage;
-use Thesis\Amqp\Message;
+use Thesis\Amqp\Internal\Rpc;
 
 /**
- * @internal
+ * @api
  */
-final class Handler implements ChannelRpc
+final class RpcHandler
 {
-    /** @var non-empty-string */
-    private readonly string $consumerTag;
-
     /** @var non-empty-string */
     private readonly string $replyTo;
 
@@ -28,15 +21,16 @@ final class Handler implements ChannelRpc
     private array $futures = [];
 
     /**
+     * @internal
      * @param \Closure(): void $cancel
      */
     public function __construct(
         private readonly Channel $publishChannel,
         private readonly Channel $consumeChannel,
-        private readonly ChannelRpcConfig $config,
+        private readonly RpcConfig $config,
         private readonly \Closure $cancel,
     ) {
-        $this->replyTo = self::generateReplyTo();
+        $this->replyTo = Rpc\generateReplyTo();
 
         $this->consumeChannel->queueDeclare(
             queue: $this->replyTo,
@@ -44,8 +38,10 @@ final class Handler implements ChannelRpc
             autoDelete: true,
         );
 
-        $this->consumerTag = $this->consumeChannel->consume(
-            callback: $this->resolveResponses(...),
+        $this->consumeChannel->consume(
+            callback: function (DeliveryMessage $delivery): void {
+                ($this->futures[$delivery->message->correlationId ?: ''] ?? null)?->complete($delivery->message);
+            },
             queue: $this->replyTo,
             noAck: true,
         );
@@ -59,7 +55,7 @@ final class Handler implements ChannelRpc
         bool $immediate = false,
         ?Cancellation $cancellation = null,
     ): Message {
-        $correlationId = self::generateId();
+        $correlationId = Rpc\generateId();
 
         /** @var DeferredFuture<Message> $deferred */
         $deferred = new DeferredFuture();
@@ -93,42 +89,16 @@ final class Handler implements ChannelRpc
 
         $cancellation ??= new TimeoutCancellation($this->config->timeout);
 
-        return $deferred->getFuture()->await($cancellation);
+        try {
+            return $deferred->getFuture()->await($cancellation);
+        } finally {
+            unset($this->futures[$correlationId]);
+        }
     }
 
     public function close(): void
     {
         $this->publishChannel->close();
-        $this->consumeChannel->cancel($this->consumerTag);
         ($this->cancel)();
-    }
-
-    private function resolveResponses(DeliveryMessage $delivery): void
-    {
-        if (($correlationId = $delivery->message->correlationId ?: '') !== '') {
-            try {
-                ($this->futures[$correlationId] ?? null)?->complete($delivery->message);
-            } finally {
-                unset($this->futures[$correlationId]);
-            }
-        }
-    }
-
-    /**
-     * @return non-empty-string
-     */
-    private static function generateReplyTo(): string
-    {
-        $id = self::generateId();
-
-        return "thesis.rpc.{$id}";
-    }
-
-    /**
-     * @return non-empty-string
-     */
-    private static function generateId(): string
-    {
-        return bin2hex(random_bytes(10));
     }
 }

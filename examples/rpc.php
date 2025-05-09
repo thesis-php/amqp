@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Amp\TimeoutCancellation;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\DeliveryMessage;
@@ -10,11 +11,11 @@ use function Amp\trapSignal;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$client = new Client(Config::fromURI('amqp://thesis:secret@localhost:5673'));
+$client = new Client(Config::default());
 $channel = $client->channel();
 $queue = $channel->queueDeclare(autoDelete: true);
 
-$consumerTag = $channel->consume(
+$channel->consume(
     callback: static function (DeliveryMessage $delivery): void {
         $delivery->reply(new Message("Request '{$delivery->message->body}' handled."));
     },
@@ -25,7 +26,7 @@ $consumerTag = $channel->consume(
 $rpc = $client->rpc();
 
 for ($i = 0; $i < 100; ++$i) {
-    dump($rpc->request(new Message("Request#{$i}"), routingKey: $queue->name)->body);
+    dump($rpc->request(new Message("Request#{$i}"), routingKey: $queue->name, cancellation: new TimeoutCancellation(2))->body);
 }
 
 trapSignal([\SIGINT, \SIGTERM]);
