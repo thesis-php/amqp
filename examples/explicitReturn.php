@@ -9,7 +9,7 @@ use Thesis\Amqp\PublishResult;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$client = new Client(Config::fromURI('amqp://thesis:secret@localhost:5673'));
+$client = new Client(Config::default());
 $channel = $client->channel();
 
 $channel->queueDelete('xxx');

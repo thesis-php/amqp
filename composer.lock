@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d9a2aae4770c88d31c5b9618b34696a",
+    "content-hash": "ab7a5000df7d87bf6eabe4e4417e401d",
     "packages": [
         {
             "name": "amphp/amp",
@@ -1658,6 +1658,69 @@
                 }
             ],
             "time": "2025-01-15T04:45:11+00:00"
+        },
+        {
+            "name": "thesis/sync-once",
+            "version": "0.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thesis-php/sync-once.git",
+                "reference": "bccfddbb8192a013a61c5a19502f4a99e180200c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thesis-php/sync-once/zipball/bccfddbb8192a013a61c5a19502f4a99e180200c",
+                "reference": "bccfddbb8192a013a61c5a19502f4a99e180200c",
+                "shasum": ""
+            },
+            "require": {
+                "amphp/amp": "^3.1",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "bamarni/composer-bin-plugin": "^1.8.2",
+                "phpunit/phpunit": "^12.1.4",
+                "symfony/var-dumper": "^6.4.15 || ^7.2.6"
+            },
+            "type": "library",
+            "extra": {
+                "bamarni-bin": {
+                    "bin-links": false,
+                    "forward-command": true,
+                    "target-directory": "tools"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Thesis\\Sync\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Valentin Udaltsov",
+                    "email": "udaltsov.valentin@gmail.com"
+                },
+                {
+                    "name": "Thesis Team",
+                    "homepage": "https://github.com/orgs/thesis-php/people"
+                }
+            ],
+            "description": "Thesis Sync Once",
+            "support": {
+                "issues": "https://github.com/thesis-php/sync-once/issues",
+                "source": "https://github.com/thesis-php/sync-once/tree/0.1.1"
+            },
+            "funding": [
+                {
+                    "url": "https://www.tinkoff.ru/cf/5MqZQas2dk7",
+                    "type": "custom"
+                }
+            ],
+            "time": "2025-05-07T18:30:37+00:00"
         }
     ],
     "packages-dev": [
@@ -3475,14 +3538,14 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.3",
         "ext-filter": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "platform-overrides": {
         "php": "8.3.17"
     },

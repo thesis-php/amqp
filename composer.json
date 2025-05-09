@@ -21,6 +21,7 @@
         "php": "^8.3",
         "ext-filter": "*",
         "amphp/amp": "^3.0",
+        "amphp/byte-stream": "^2.1",
         "amphp/pipeline": "^1.2",
         "amphp/socket": "^2.3",
         "revolt/event-loop": "^1.0",
@@ -30,7 +31,8 @@
         "thesis/byte-reader": "^0.3.1",
         "thesis/byte-reader-writer": "^0.1.0",
         "thesis/byte-writer": "^0.2.1",
-        "thesis/endian": "^0.1.0"
+        "thesis/endian": "^0.1.0",
+        "thesis/sync-once": "^0.1.1"
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.8.2",

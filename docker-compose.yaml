@@ -4,9 +4,6 @@ services:
   rabbitmq:
     image: rabbitmq:4.0-management-alpine
     restart: always
-    environment:
-      RABBITMQ_DEFAULT_USER: thesis
-      RABBITMQ_DEFAULT_PASS: secret
     ports:
-      - "127.0.0.1:5673:5672"
-      - "127.0.0.1:15673:15672"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"

@@ -21,20 +21,11 @@ final class AmqpTest extends TestCase
 {
     private Client $client;
 
-    private string $dsn;
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        $dsn = getenv('THESIS_AMQP_DSN');
-
-        if (!\is_string($dsn) || $dsn === '') {
-            self::markTestSkipped('THESIS_AMQP_DSN is not set.');
-        }
-
-        $this->dsn = $dsn;
-        $this->client = new Client(Config::fromURI($this->dsn));
+        $this->client = new Client(Config::default());
     }
 
     protected function tearDown(): void
@@ -187,12 +178,15 @@ final class AmqpTest extends TestCase
         self::expectNotToPerformAssertions();
     }
 
+    /**
+     * @param int<0, 65535> $channelMax
+     */
     #[TestWith([10])]
     #[TestWith([15])]
     #[TestWith([20])]
     public function testChannelsExhausted(int $channelMax): void
     {
-        $client = new Client(Config::fromURI("{$this->dsn}?channel_max={$channelMax}"));
+        $client = new Client(new Config(channelMax: $channelMax));
 
         for ($i = 0; $i < $channelMax; ++$i) {
             $client->channel();
@@ -791,7 +785,7 @@ final class AmqpTest extends TestCase
         '1c082d18-066f-4bb4-8766-f6fb712fbe23',
         new \DateTimeImmutable('@1735883627'),
         'orders',
-        'thesis',
+        'guest',
         'demo',
         ['x' => 'y'],
     ])]
