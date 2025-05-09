@@ -24,6 +24,7 @@ use Thesis\Amqp\Internal\Properties;
 use Thesis\Amqp\Internal\Protocol;
 use Thesis\Amqp\Internal\Protocol\Frame;
 use Thesis\Amqp\Internal\Returns;
+use Thesis\Sync;
 
 /**
  * @api
@@ -49,7 +50,8 @@ final class Channel
 
     private ChannelMode $mode = ChannelMode::Regular;
 
-    private bool $closed = false;
+    /** @var ?Sync\Once<bool> */
+    private ?Sync\Once $closed = null;
 
     /**
      * @param non-negative-int $channelId
@@ -768,23 +770,15 @@ final class Channel
 
     public function isClosed(): bool
     {
-        return $this->closed;
+        return $this->closed?->await() ?? false;
     }
 
     /**
      * @param non-negative-int $replyCode
-     * @throws \Throwable
      */
-    public function close(int $replyCode = 200, string $replyText = ''): void
+    public function close(int $replyCode = 200, string $replyText = '', ?Cancellation $cancellation = null): void
     {
-        if (!$this->closed) {
-            $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
-
-            $this->await(Frame\ChannelCloseOk::class);
-
-            $this->supervisor->stop();
-            $this->closed = true;
-        }
+        ($this->closed ??= new Sync\Once(fn(): bool => $this->doClose($replyCode, $replyText)))->await($cancellation);
     }
 
     /**
@@ -802,7 +796,7 @@ final class Channel
         $this->hooks->reject($this->channelId, $e);
         $this->hooks->unsubscribe($this->channelId);
         $this->cancellations->cancelAll(error: $e);
-        $this->closed = true;
+        $this->closed = new Sync\Once(static fn(): bool => true);
     }
 
     /**
@@ -849,5 +843,19 @@ final class Channel
         return $this->hooks
             ->oneshot($this->channelId, $frameType)
             ->await($cancellation);
+    }
+
+    /**
+     * @param non-negative-int $replyCode
+     */
+    private function doClose(int $replyCode = 200, string $replyText = ''): bool
+    {
+        $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
+
+        $this->await(Frame\ChannelCloseOk::class);
+
+        $this->supervisor->stop();
+
+        return true;
     }
 }
