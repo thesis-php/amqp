@@ -454,6 +454,7 @@ use Thesis\Amqp\Config;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Message;
 use Thesis\Amqp\DeliveryMode;
+use Thesis\Time\TimeSpan;
 
 $client = new Client(Config::default());
 
@@ -464,7 +465,7 @@ $channel->publish(new Message(
     contentType: 'application/json',
     contentEncoding: 'json',
     deliveryMode: DeliveryMode::Persistent,
-    expiration: '5000', // 5 seconds.
+    expiration: TimeSpan::fromSeconds(5),
 ));
 ```
 

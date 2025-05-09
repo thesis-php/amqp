@@ -13,15 +13,20 @@ use Thesis\Amqp\Message;
 
 /**
  * @internal
- * @phpstan-type ConsumeListener = callable(DeliveryMessage): void
- * @phpstan-type ReturnListener = callable(DeliveryMessage): void
- * @phpstan-type GetListener = callable(null|DeliveryMessage): void
+ * @phpstan-type ConsumeListener = callable(DeliveryMessage, Channel): void
+ * @phpstan-type ReturnListener = callable(DeliveryMessage, Channel): void
+ * @phpstan-type GetListener = callable(null|DeliveryMessage, Channel): void
  */
 final class DeliverySupervisor
 {
     private const int WAIT = 0;
     private const int HEADER = 1;
     private const int BODY = 2;
+
+    /**
+     * @var \WeakReference<Channel>
+     */
+    private readonly \WeakReference $weakChannel;
 
     /** @var self::* */
     private int $step = self::WAIT;
@@ -55,10 +60,12 @@ final class DeliverySupervisor
      * @param non-negative-int $channelId
      */
     public function __construct(
-        private readonly Channel $channel,
+        Channel $channel,
         private readonly Hooks $hooks,
         private readonly int $channelId,
-    ) {}
+    ) {
+        $this->weakChannel = \WeakReference::create($channel);
+    }
 
     public function run(): void
     {
@@ -119,7 +126,7 @@ final class DeliverySupervisor
     private function onBasicGetEmpty(): void
     {
         foreach ($this->getListeners as $listener) {
-            $listener(null);
+            $listener(null, $this->channel());
         }
     }
 
@@ -177,11 +184,12 @@ final class DeliverySupervisor
         // You cannot call ack/nack/reject on a returned message.
         $noAction = static function (): void {};
 
+        $channel = $this->channel();
+
         $delivery = new DeliveryMessage(
-            ack: $this->return !== null ? $noAction : $this->channel->ack(...),
-            nack: $this->return !== null ? $noAction : $this->channel->nack(...),
-            reject: $this->return !== null ? $noAction : $this->channel->reject(...),
-            reply: $this->replier($this->header->properties) ?: $noAction,
+            ack: $this->return !== null ? $noAction : $channel->ack(...),
+            nack: $this->return !== null ? $noAction : $channel->nack(...),
+            reject: $this->return !== null ? $noAction : $channel->reject(...),
             message: new Message(
                 body: $this->message,
                 headers: $this->header->properties->headers,
@@ -214,7 +222,7 @@ final class DeliverySupervisor
         };
 
         foreach ($listeners as $listener) {
-            $listener($delivery);
+            $listener($delivery, $channel);
         }
 
         $this->get = null;
@@ -233,6 +241,11 @@ final class DeliverySupervisor
     private function subscribe(string $frameType, \Closure $callback): void
     {
         $this->hooks->subscribe($this->channelId, $frameType, $callback);
+    }
+
+    private function channel(): Channel
+    {
+        return $this->weakChannel->get() ?? throw new \LogicException('Channel has been garbage collected.');
     }
 
     /**

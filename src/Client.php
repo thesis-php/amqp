@@ -114,5 +114,7 @@ final class Client
         if (\PHP_VERSION_ID >= 80400) {
             $this->disconnect();
         }
+
+        $this->hooks->complete();
     }
 }

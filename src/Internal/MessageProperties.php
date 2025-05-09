@@ -6,6 +6,7 @@ namespace Thesis\Amqp\Internal;
 
 use Thesis\Amqp\DeliveryMode;
 use Thesis\Amqp\Message;
+use Thesis\Time\TimeSpan;
 
 /**
  * @internal
@@ -41,7 +42,7 @@ final readonly class MessageProperties
         public ?int $priority = null,
         public ?string $correlationId = null,
         public ?string $replyTo = null,
-        public ?string $expiration = null,
+        public ?TimeSpan $expiration = null,
         public ?string $messageId = null,
         public ?\DateTimeImmutable $timestamp = null,
         public ?string $type = null,
@@ -104,7 +105,7 @@ final readonly class MessageProperties
             $mask |= self::FLAG_REPLY_TO;
         }
 
-        if ($this->expiration !== null && $this->expiration !== '') {
+        if ($this->expiration !== null) {
             $mask |= self::FLAG_EXPIRATION;
         }
 
@@ -170,8 +171,8 @@ final readonly class MessageProperties
             $size += 1 + \strlen($this->replyTo);
         }
 
-        if ($this->expiration !== null && $this->expiration !== '') {
-            $size += 1 + \strlen($this->expiration);
+        if ($this->expiration !== null) {
+            $size += 1 + \strlen((string) $this->expiration->toMilliseconds());
         }
 
         if ($this->messageId !== null && $this->messageId !== '') {
@@ -232,7 +233,7 @@ final readonly class MessageProperties
         }
 
         if (self::hasSet($mask, self::FLAG_EXPIRATION) && $this->expiration !== null) {
-            $writer->writeString($this->expiration);
+            $writer->writeString((string) $this->expiration->toMilliseconds());
         }
 
         if (self::hasSet($mask, self::FLAG_MESSAGE_ID) && $this->messageId !== null) {
@@ -271,7 +272,7 @@ final readonly class MessageProperties
         $priority = self::hasSet($mask, self::FLAG_PRIORITY) ? $reader->readUint8() : null;
         $correlationId = self::hasSet($mask, self::FLAG_CORRELATION_ID) ? $reader->readString() : null;
         $replyTo = self::hasSet($mask, self::FLAG_REPLY_TO) ? $reader->readString() : null;
-        $expiration = self::hasSet($mask, self::FLAG_EXPIRATION) ? $reader->readString() : null;
+        $expiration = self::hasSet($mask, self::FLAG_EXPIRATION) ? TimeSpan::fromMilliseconds((int) $reader->readString()) : null;
         $messageId = self::hasSet($mask, self::FLAG_MESSAGE_ID) ? $reader->readString() : null;
         $timestamp = self::hasSet($mask, self::FLAG_TIMESTAMP) ? $reader->readTimestamp() : null;
         $type = self::hasSet($mask, self::FLAG_TYPE) ? $reader->readString() : null;

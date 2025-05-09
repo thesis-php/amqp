@@ -12,6 +12,7 @@ use Thesis\Amqp\Exception\ChannelIsNotTransactional;
 use Thesis\Amqp\Exception\ChannelModeIsImpossible;
 use Thesis\Amqp\Exception\ChannelWasClosed;
 use Thesis\Amqp\Exception\NoAvailableChannel;
+use Thesis\Time\TimeSpan;
 use function Amp\async;
 use function Amp\delay;
 
@@ -781,7 +782,7 @@ final class AmqpTest extends TestCase
         DeliveryMode::Transient,
         1,
         '5a2da3f7-e2d4-4029-92f7-d821971b85a3',
-        '60000',
+        60000,
         '1c082d18-066f-4bb4-8766-f6fb712fbe23',
         new \DateTimeImmutable('@1735883627'),
         'orders',
@@ -796,7 +797,7 @@ final class AmqpTest extends TestCase
         DeliveryMode $deliveryMode = DeliveryMode::Whatever,
         ?int $priority = null,
         ?string $correlationId = null,
-        ?string $expiration = null,
+        ?int $expiration = null,
         ?string $messageId = null,
         ?\DateTimeImmutable $timestamp = null,
         ?string $type = null,
@@ -815,7 +816,7 @@ final class AmqpTest extends TestCase
             deliveryMode: $deliveryMode,
             priority: $priority,
             correlationId: $correlationId,
-            expiration: $expiration,
+            expiration: $expiration === null ? null : TimeSpan::fromMilliseconds($expiration),
             messageId: $messageId,
             timestamp: $timestamp,
             type: $type,

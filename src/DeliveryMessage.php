@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp;
 
-use Amp\Future;
-use function Amp\async;
+use Amp\Cancellation;
+use Thesis\Sync;
 
 /**
  * @api
@@ -16,10 +16,8 @@ use function Amp\async;
  */
 final class DeliveryMessage
 {
-    /** @var ?Future<void> */
-    private ?Future $processedFuture = null;
-
-    private bool $processed = false;
+    /** @var ?Sync\Once<void> */
+    private ?Sync\Once $processed = null;
 
     /**
      * @param Ack $ack
@@ -42,19 +40,19 @@ final class DeliveryMessage
         public readonly bool $returned = false,
     ) {}
 
-    public function ack(bool $multiple = false): void
+    public function ack(bool $multiple = false, ?Cancellation $cancellation = null): void
     {
-        $this->process(fn() => ($this->ack)($this, $multiple));
+        $this->process(fn() => ($this->ack)($this, $multiple), $cancellation);
     }
 
-    public function nack(bool $multiple = false, bool $requeue = true): void
+    public function nack(bool $multiple = false, bool $requeue = true, ?Cancellation $cancellation = null): void
     {
-        $this->process(fn() => ($this->nack)($this, $multiple, $requeue));
+        $this->process(fn() => ($this->nack)($this, $multiple, $requeue), $cancellation);
     }
 
-    public function reject(bool $requeue = true): void
+    public function reject(bool $requeue = true, ?Cancellation $cancellation = null): void
     {
-        $this->process(fn() => ($this->reject)($this, $requeue));
+        $this->process(fn() => ($this->reject)($this, $requeue), $cancellation);
     }
 
     public function reply(Message $message): void
@@ -65,20 +63,8 @@ final class DeliveryMessage
     /**
      * @param \Closure(): void $hook
      */
-    private function process(\Closure $hook): void
+    private function process(\Closure $hook, ?Cancellation $cancellation = null): void
     {
-        $this->processedFuture?->await();
-
-        if (!$this->processed) {
-            $this->processedFuture ??= async($hook);
-
-            try {
-                $this->processedFuture->await();
-            } finally {
-                $this->processedFuture = null;
-            }
-
-            $this->processed = true;
-        }
+        ($this->processed ??= new Sync\Once($hook))->await($cancellation);
     }
 }
