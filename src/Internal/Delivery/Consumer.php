@@ -16,13 +16,11 @@ final class Consumer
     /** @var array<non-empty-string, Listener> */
     private array $consumers = [];
 
-    public function __construct(
-        DeliverySupervisor $supervisor,
-        Channel $channel,
-    ) {
+    public function __construct(DeliverySupervisor $supervisor)
+    {
         $consumers = &$this->consumers;
 
-        $supervisor->addConsumeListener(static function (DeliveryMessage $delivery) use (&$consumers, $channel): void {
+        $supervisor->addConsumeListener(static function (DeliveryMessage $delivery, Channel $channel) use (&$consumers): void {
             $consumer = $consumers[$delivery->consumerTag] ?? null;
             if ($consumer !== null) {
                 $consumer($delivery, $channel);
