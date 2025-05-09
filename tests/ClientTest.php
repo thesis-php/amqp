@@ -31,33 +31,47 @@ final class ClientTest extends TestCase
         $channel->confirmSelect();
     }
 
-    #[RunInSeparateProcess]
     public function testClientGarbageCollection(): void
     {
-        gc_disable();
-        $client = new Client(Config::default());
-        $channel = $client->channel();
-        $weakClient = \WeakReference::create($client);
-        $weakChannel = \WeakReference::create($channel);
+        $gcEnabled = gc_enabled();
 
-        unset($client, $channel);
+        try {
+            gc_disable();
+            $client = new Client(Config::default());
+            $channel = $client->channel();
+            $weakClient = \WeakReference::create($client);
+            $weakChannel = \WeakReference::create($channel);
 
-        self::assertTrue($weakClient->get() === null, 'Client has circular references and cannot be garbage collected');
-        self::assertTrue($weakChannel->get() === null, 'Channel has circular references and cannot be garbage collected');
+            unset($client, $channel);
+
+            self::assertTrue($weakClient->get() === null, 'Client has circular references and cannot be garbage collected');
+            self::assertTrue($weakChannel->get() === null, 'Channel has circular references and cannot be garbage collected');
+        } finally {
+            if ($gcEnabled) {
+                gc_enable();
+            }
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testClosedChannelGarbageCollection(): void
     {
-        gc_disable();
-        $client = new Client(Config::default());
-        $channel = $client->channel();
-        $weakChannel = \WeakReference::create($channel);
-        $channel->close();
+        $gcEnabled = gc_enabled();
 
-        unset($channel);
+        try {
+            gc_disable();
+            $client = new Client(Config::default());
+            $channel = $client->channel();
+            $weakChannel = \WeakReference::create($channel);
+            $channel->close();
 
-        self::assertTrue($weakChannel->get() === null, 'Channel has circular references and cannot be garbage collected');
+            unset($channel);
+
+            self::assertTrue($weakChannel->get() === null, 'Channel has circular references and cannot be garbage collected');
+        } finally {
+            if ($gcEnabled) {
+                gc_enable();
+            }
+        }
     }
 
     #[RequiresPhp('8.4')]
