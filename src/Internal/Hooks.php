@@ -112,13 +112,15 @@ final class Hooks implements \Countable
 
     public function error(\Throwable $e): void
     {
-        foreach ($this->queue as $deferred) {
-            foreach ($deferred as $future) {
-                $future->error($e);
+        try {
+            foreach ($this->queue as $deferred) {
+                foreach ($deferred as $future) {
+                    $future->error($e);
+                }
             }
+        } finally {
+            $this->complete();
         }
-
-        $this->complete();
     }
 
     public function complete(): void
