@@ -10,8 +10,9 @@ use Thesis\Amqp\DeliveryMessage;
 /**
  * @internal
  * @phpstan-type Listener = callable(DeliveryMessage, Channel): void
+ * @template-implements \IteratorAggregate<non-empty-string, Listener>
  */
-final class Consumer
+final class Consumer implements \IteratorAggregate
 {
     public static function create(DeliverySupervisor $supervisor, Channel $channel): self
     {
@@ -22,6 +23,7 @@ final class Consumer
     }
 
     /**
+     * @param non-empty-string $consumerTag
      * @param Listener $consumer
      */
     public function register(string $consumerTag, callable $consumer): void
@@ -37,7 +39,12 @@ final class Consumer
         unset($this->consumers[$consumerTag]);
     }
 
-    /** @var array<string, Listener> */
+    public function getIterator(): \Traversable
+    {
+        yield from $this->consumers;
+    }
+
+    /** @var array<non-empty-string, Listener> */
     private array $consumers = [];
 
     private function __construct(
@@ -47,11 +54,18 @@ final class Consumer
 
     private function run(): void
     {
-        $this->supervisor->addConsumeListener(function (DeliveryMessage $delivery): void {
-            $consumer = $this->consumers[$delivery->consumerTag] ?? null;
+        $consumers = &$this->consumers;
+        $channel = $this->channel;
+
+        $this->supervisor->addConsumeListener(static function (DeliveryMessage $delivery) use (&$consumers, $channel): void {
+            $consumer = $consumers[$delivery->consumerTag] ?? null;
             if ($consumer !== null) {
-                $consumer($delivery, $this->channel);
+                $consumer($delivery, $channel);
             }
+        });
+
+        $this->supervisor->addShutdownListener(static function () use (&$consumers): void {
+            $consumers = [];
         });
     }
 }
