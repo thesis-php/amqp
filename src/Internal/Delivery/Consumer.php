@@ -13,15 +13,25 @@ use Thesis\Amqp\DeliveryMessage;
  */
 final class Consumer
 {
-    public static function create(DeliverySupervisor $supervisor, Channel $channel): self
-    {
-        $consumer = new self($supervisor, $channel);
-        $consumer->run();
+    /** @var array<non-empty-string, Listener> */
+    private array $consumers = [];
 
-        return $consumer;
+    public function __construct(
+        DeliverySupervisor $supervisor,
+        Channel $channel,
+    ) {
+        $consumers = &$this->consumers;
+
+        $supervisor->addConsumeListener(static function (DeliveryMessage $delivery) use (&$consumers, $channel): void {
+            $consumer = $consumers[$delivery->consumerTag] ?? null;
+            if ($consumer !== null) {
+                $consumer($delivery, $channel);
+            }
+        });
     }
 
     /**
+     * @param non-empty-string $consumerTag
      * @param Listener $consumer
      */
     public function register(string $consumerTag, callable $consumer): void
@@ -35,23 +45,5 @@ final class Consumer
     public function unregister(string $consumerTag): void
     {
         unset($this->consumers[$consumerTag]);
-    }
-
-    /** @var array<string, Listener> */
-    private array $consumers = [];
-
-    private function __construct(
-        private readonly DeliverySupervisor $supervisor,
-        private readonly Channel $channel,
-    ) {}
-
-    private function run(): void
-    {
-        $this->supervisor->addConsumeListener(function (DeliveryMessage $delivery): void {
-            $consumer = $this->consumers[$delivery->consumerTag] ?? null;
-            if ($consumer !== null) {
-                $consumer($delivery, $this->channel);
-            }
-        });
     }
 }

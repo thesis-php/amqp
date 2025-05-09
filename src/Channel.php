@@ -63,6 +63,8 @@ final class Channel
     ) {
         $this->supervisor = new DeliverySupervisor($this, $this->hooks, $this->channelId);
         $this->consumerTags = new ConsumerTagGenerator();
+        $this->consumer = new Consumer($this->supervisor, $this);
+        $this->receiver = new Receiver($this->supervisor);
         $this->consumer = Consumer::create($this->supervisor, $this);
         $this->gets = new ChannelAtomicGet(Receiver::create($this->supervisor), $this->connection, $this->channelId);
         $this->returns = new Returns\ReturnListener($this->supervisor);
