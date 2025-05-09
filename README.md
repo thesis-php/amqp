@@ -1066,6 +1066,46 @@ trapSignal([\SIGINT, \SIGTERM]);
 $client->disconnect();
 ```
 
+Since responders may be unavailable, we risk "hanging" indefinitely if we don't control the request execution time — just like in any HTTP/gRPC client.
+You can configure a global timeout using `RpcConfig` as follows:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Config;
+use Thesis\Amqp\RpcConfig;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$client = new Client(Config::default());
+$rpc = $client->rpc(new RpcConfig(timeout: 5));
+```
+
+Or you can specify a specific `Cancellation` for a request (which can be a signal or a timeout):
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Amp\TimeoutCancellation;
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Config;
+use Thesis\Amqp\Message;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$client = new Client(Config::default());
+$rpc = $client->rpc();
+
+for ($i = 0; $i < 100; ++$i) {
+    dump($rpc->request(new Message("Request#{$i}"), routingKey: 'some_queue', cancellation: new TimeoutCancellation(2))->body);
+}
+```
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE) for more information.
