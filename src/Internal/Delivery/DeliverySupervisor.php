@@ -240,12 +240,12 @@ final class DeliverySupervisor
      */
     private function replier(MessageProperties $properties): ?\Closure
     {
-        $replyTo = $properties->replyTo ?: null;
+        $replyTo = $properties->replyTo ?? null;
         if ($replyTo === null) {
             return null;
         }
 
-        $correlationId = $properties->correlationId ?: null;
+        $correlationId = $properties->correlationId ?? null;
         if ($correlationId === null) {
             return null;
         }
