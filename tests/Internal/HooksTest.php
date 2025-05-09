@@ -14,7 +14,7 @@ final class HooksTest extends TestCase
 {
     public function testFutureComplete(): void
     {
-        $hooks = Hooks::create();
+        $hooks = new Hooks();
         $future = $hooks->oneshot(0, ConnectionStart::class);
         self::assertFalse($future->isComplete());
 
@@ -25,7 +25,7 @@ final class HooksTest extends TestCase
 
     public function testError(): void
     {
-        $hooks = Hooks::create();
+        $hooks = new Hooks();
         $future = $hooks->oneshot(0, ConnectionStart::class);
 
         $hooks->error(new \Exception('Error.'));
@@ -37,7 +37,7 @@ final class HooksTest extends TestCase
 
     public function testComplete(): void
     {
-        $hooks = Hooks::create();
+        $hooks = new Hooks();
         $future = $hooks->oneshot(0, ConnectionStart::class);
 
         $hooks->complete();
