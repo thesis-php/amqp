@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Amqp;
 
 use Amp\DeferredFuture;
+use Amp\Future;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -1034,5 +1035,17 @@ final class AmqpTest extends TestCase
         $delivery->ack();
 
         $channel->close();
+    }
+
+    public function testChannelClose(): void
+    {
+        $channel = $this->client->channel();
+        self::assertFalse($channel->isClosed());
+
+        $future1 = async($channel->close(...));
+        $future2 = async($channel->isClosed(...));
+
+        [, $isClosed] = Future\await([$future1, $future2]);
+        self::assertTrue($isClosed);
     }
 }
