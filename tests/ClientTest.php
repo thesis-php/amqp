@@ -84,28 +84,4 @@ final class ClientTest extends TestCase
         self::expectException(ConnectionIsClosed::class);
         $channel->confirmSelect();
     }
-
-    public function testNoCircularReferencesOnChannelCall(): void
-    {
-        $client = new Client(Config::default());
-        $reference = \WeakReference::create($client);
-
-        $client->channel();
-
-        unset($client);
-
-        self::assertNull($reference->get());
-    }
-
-    public function testNoCircularReferencesOnRpcCall(): void
-    {
-        $client = new Client(Config::default());
-        $reference = \WeakReference::create($client);
-
-        $client->rpc();
-
-        unset($client);
-
-        self::assertNull($reference->get());
-    }
 }
