@@ -1078,11 +1078,12 @@ declare(strict_types=1);
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\RpcConfig;
+use Thesis\Time\TimeSpan;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$rpc = $client->rpc(new RpcConfig(timeout: 5));
+$rpc = $client->rpc(new RpcConfig(timeout: TimeSpan::fromSeconds(5)));
 ```
 
 Or you can specify a specific `Cancellation` for a request (which can be a signal or a timeout):

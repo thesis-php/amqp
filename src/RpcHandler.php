@@ -87,7 +87,7 @@ final class RpcHandler
             ?->await()
             ->ensurePublished();
 
-        $cancellation ??= new TimeoutCancellation($this->config->timeout);
+        $cancellation ??= new TimeoutCancellation($this->config->timeout->toSeconds());
 
         try {
             return $deferred->getFuture()->await($cancellation);
