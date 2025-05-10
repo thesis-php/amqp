@@ -20,7 +20,7 @@ final class ConfirmationListenerTest extends TestCase
     #[TestWith([PublishResult::Nacked, new BasicNack(1, false, false)])]
     public function testConfirmOne(PublishResult $result, BasicAck|BasicNack $frame): void
     {
-        $hooks = Hooks::create();
+        $hooks = new Hooks();
         $listener = new ConfirmationListener($hooks, 1);
         $listener->listen();
 
@@ -38,7 +38,7 @@ final class ConfirmationListenerTest extends TestCase
     #[TestWith([PublishResult::Nacked, new BasicNack(2, true, false)])]
     public function testConfirmMultiple(PublishResult $result, BasicAck|BasicNack $frame): void
     {
-        $hooks = Hooks::create();
+        $hooks = new Hooks();
         $listener = new ConfirmationListener($hooks, 1);
         $listener->listen();
 
@@ -61,7 +61,7 @@ final class ConfirmationListenerTest extends TestCase
 
     public function testCancelConfirmation(): void
     {
-        $hooks = Hooks::create();
+        $hooks = new Hooks();
         $listener = new ConfirmationListener($hooks, 1);
         $listener->listen();
 
@@ -73,7 +73,7 @@ final class ConfirmationListenerTest extends TestCase
 
     public function testAwaitAllConfirmations(): void
     {
-        $hooks = Hooks::create();
+        $hooks = new Hooks();
         $listener = new ConfirmationListener($hooks, 1);
         $listener->listen();
 

@@ -9,25 +9,18 @@ use Amp\Future;
 
 /**
  * @internal
- * @template-implements \IteratorAggregate<non-negative-int, DeferredFuture<Protocol\Frame>>
  */
-final class Hooks implements
-    \IteratorAggregate,
-    \Countable
+final class Hooks implements \Countable
 {
-    public static function create(): self
-    {
-        return new self();
-    }
+    /**
+     * @var array<non-negative-int, array<non-empty-string, array<non-negative-int, callable(Protocol\Frame): void>>>
+     */
+    private array $defers = [];
 
     /**
-     * @param array<non-negative-int, array<non-empty-string, list<callable(Protocol\Frame): void>>> $defers
-     * @param array<non-negative-int, array<int, DeferredFuture<Protocol\Frame>>> $queue
+     * @var array<non-negative-int, array<int, DeferredFuture<Protocol\Frame>>>
      */
-    private function __construct(
-        private array $defers = [],
-        private array $queue = [],
-    ) {}
+    private array $queue = [];
 
     /**
      * @template T of Protocol\Frame
@@ -48,7 +41,6 @@ final class Hooks implements
                 = function (Protocol\Frame $frame) use ($channelId, $frameType, $idx, $subscriber): void {
                     /** @var T $frame */
                     $subscriber($frame);
-                    /** @phpstan-ignore assign.propertyType */
                     unset($this->defers[$channelId][$frameType][$idx]);
                 };
         }
@@ -67,13 +59,11 @@ final class Hooks implements
 
         $idx = \count($this->defers[$channelId][$frameType] ?? []);
         $this->defers[$channelId][$frameType][]
-            /** @param T $frame */
             = function (Protocol\Frame $frame) use ($deferred, $channelId, $frameType, $idx): void {
                 if (!$deferred->isComplete()) {
                     $deferred->complete($frame);
                 }
                 unset(
-                    /** @phpstan-ignore assign.propertyType */
                     $this->defers[$channelId][$frameType][$idx],
                     $this->queue[$channelId][spl_object_id($deferred)],
                 );
@@ -122,27 +112,21 @@ final class Hooks implements
 
     public function error(\Throwable $e): void
     {
-        foreach ($this as $f) {
-            $f->error($e);
+        try {
+            foreach ($this->queue as $deferred) {
+                foreach ($deferred as $future) {
+                    $future->error($e);
+                }
+            }
+        } finally {
+            $this->complete();
         }
-
-        $this->complete();
     }
 
     public function complete(): void
     {
-        [$this->defers, $this->queue] = [[], []];
-    }
-
-    public function getIterator(): \Traversable
-    {
-        foreach ($this->queue as $channelId => $deferred) {
-            if (($futureId = array_key_first($deferred)) !== null) {
-                if (($future = $deferred[$futureId] ?? null) !== null) {
-                    yield $channelId => $future;
-                }
-            }
-        }
+        $this->defers = [];
+        $this->queue = [];
     }
 
     public function count(): int
