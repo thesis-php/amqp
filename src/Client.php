@@ -35,7 +35,7 @@ final class Client
         public readonly Config $config,
     ) {
         $this->properties = Properties::createDefault();
-        $this->hooks = Hooks::create();
+        $this->hooks = new Hooks();
 
         $this->connectionFactory = new AmqpConnectionFactory(
             $this->config,

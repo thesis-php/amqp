@@ -234,6 +234,31 @@ final class AmqpTest extends TestCase
         $channel->close();
     }
 
+    public function testConcurrentGet(): void
+    {
+        $channel = $this->client->channel();
+
+        $queue = $channel->queueDeclare(autoDelete: true);
+
+        $channel->publishBatch([
+            new PublishMessage(new Message('1'), routingKey: $queue->name),
+            new PublishMessage(new Message('2'), routingKey: $queue->name),
+        ]);
+
+        $future1 = async($channel->get(...), $queue->name);
+        $future2 = async($channel->get(...), $queue->name);
+
+        [$message1, $message2] = Future\await([$future1, $future2]);
+
+        $message1?->ack();
+        $message2?->ack();
+
+        self::assertSame(['1', '2'], [$message1?->message->body, $message2?->message->body]);
+        self::assertSame(0, $channel->queueDelete($queue->name));
+
+        $channel->close();
+    }
+
     /**
      * @param non-empty-string $exchange
      * @param non-empty-string $queue
