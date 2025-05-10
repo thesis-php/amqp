@@ -13,6 +13,7 @@ $config = (new Config())
             ->in(__DIR__ . '/src')
             ->in(__DIR__ . '/tests')
             ->in(__DIR__ . '/examples')
+            ->in(__DIR__ . '/benchmark')
             ->append([
                 __FILE__,
             ]),
