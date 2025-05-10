@@ -402,6 +402,9 @@ final class Channel
      */
     public function cancel(string $consumerTag, bool $noWait = false): void
     {
+        $this->consumer->unregister($consumerTag);
+        $this->cancellations->cancel($consumerTag, $noWait);
+
         $this->connection->writeFrame(Protocol\Method::basicCancel(
             channelId: $this->channelId,
             consumerTag: $consumerTag,
@@ -411,9 +414,6 @@ final class Channel
         if (!$noWait) {
             $this->await(Frame\BasicCancelOk::class);
         }
-
-        $this->consumer->unregister($consumerTag);
-        $this->cancellations->cancel($consumerTag, $noWait);
     }
 
     /**
