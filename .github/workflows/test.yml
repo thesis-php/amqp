@@ -10,6 +10,8 @@ jobs:
     services:
       rabbitmq:
         image: rabbitmq:alpine
+        env:
+          RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit channel_max 8188"
         ports:
           - "5672:5672"
         options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
@@ -33,3 +35,4 @@ jobs:
         env:
           COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH || '{}' }}
       - run: composer test -- --colors=always
+      - run: composer bench
