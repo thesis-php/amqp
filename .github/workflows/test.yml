@@ -27,7 +27,8 @@ jobs:
           ini-file: development
           tools: composer:v2
           extensions: pcntl
-          ini-values: disable_functions=pcntl_fork, xdebug.mode=off
+          ini-values: disable_functions=pcntl_fork
+          coverage: none
       - uses: ramsey/composer-install@v3
         with:
           composer-options: --optimize-autoloader
