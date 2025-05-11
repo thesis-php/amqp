@@ -1110,6 +1110,8 @@ for ($i = 0; $i < 100; ++$i) {
 }
 ```
 
+> ⚠️ Important: the `RpcHandler` implements idempotency: if multiple requests with the same `correlationId` arrive simultaneously, they will receive the same result from the very first request.
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE) for more information.

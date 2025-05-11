@@ -55,37 +55,27 @@ final class RpcHandler
         bool $immediate = false,
         ?Cancellation $cancellation = null,
     ): Message {
-        $correlationId = Rpc\generateId();
+        $correlationId = $message->correlationId ?: Rpc\generateId();
 
-        /** @var DeferredFuture<Message> $deferred */
-        $deferred = new DeferredFuture();
-        $this->futures[$correlationId] = $deferred;
+        /** @var ?DeferredFuture<Message> $deferred */
+        $deferred = $this->futures[$correlationId] ?? null;
 
-        $this->publishChannel
-            ->publish(
-                message: new Message(
-                    body: $message->body,
-                    headers: $message->headers,
-                    contentType: $message->contentType,
-                    contentEncoding: $message->contentEncoding,
-                    deliveryMode: $message->deliveryMode,
-                    priority: $message->priority,
-                    correlationId: $correlationId,
-                    replyTo: $this->replyTo,
-                    expiration: $message->expiration,
-                    messageId: $message->messageId,
-                    timestamp: $message->timestamp,
-                    type: $message->type,
-                    userId: $message->userId,
-                    appId: $message->appId,
-                ),
-                exchange: $exchange,
-                routingKey: $routingKey,
-                mandatory: $mandatory,
-                immediate: $immediate,
-            )
-            ?->await()
-            ->ensurePublished();
+        if ($deferred === null) {
+            /** @var DeferredFuture<Message> $deferred */
+            $deferred = new DeferredFuture();
+            $this->futures[$correlationId] = $deferred;
+
+            $this->publishChannel
+                ->publish(
+                    message: $this->createMessage($message, $correlationId),
+                    exchange: $exchange,
+                    routingKey: $routingKey,
+                    mandatory: $mandatory,
+                    immediate: $immediate,
+                )
+                ?->await()
+                ->ensurePublished();
+        }
 
         $cancellation ??= new TimeoutCancellation($this->config->timeout->toSeconds());
 
@@ -100,5 +90,25 @@ final class RpcHandler
     {
         $this->publishChannel->close();
         ($this->cancel)();
+    }
+
+    private function createMessage(Message $message, string $correlationId): Message
+    {
+        return new Message(
+            body: $message->body,
+            headers: $message->headers,
+            contentType: $message->contentType,
+            contentEncoding: $message->contentEncoding,
+            deliveryMode: $message->deliveryMode,
+            priority: $message->priority,
+            correlationId: $correlationId,
+            replyTo: $this->replyTo,
+            expiration: $message->expiration,
+            messageId: $message->messageId,
+            timestamp: $message->timestamp,
+            type: $message->type,
+            userId: $message->userId,
+            appId: $message->appId,
+        );
     }
 }

@@ -1093,6 +1093,37 @@ final class AmqpTest extends TestCase
 
         $channel->cancel($consumerTag);
         $channel->close();
+        $rpc->close();
+    }
+
+    public function testRpcIdempotency(): void
+    {
+        $channel = $this->client->channel();
+
+        $queue = $channel->queueDeclare();
+
+        $channel->qos(prefetchCount: 1);
+        $consumerTag = $channel->consume(
+            callback: static function (DeliveryMessage $delivery): void {
+                $delivery->reply(new Message($delivery->message->body));
+            },
+            queue: $queue->name,
+            noAck: true,
+        );
+
+        $rpc = $this->client->rpc();
+
+        $request1 = async($rpc->request(...), new Message('1', correlationId: 'xyz'), routingKey: $queue->name);
+        $request2 = async($rpc->request(...), new Message('2', correlationId: 'xyz'), routingKey: $queue->name);
+
+        [$response1, $response2] = Future\await([$request1, $request2]);
+
+        self::assertSame('1', $response1->body);
+        self::assertSame($response1->body, $response2->body);
+
+        $channel->cancel($consumerTag);
+        $channel->close();
+        $rpc->close();
     }
 
     public function testChannelClose(): void
