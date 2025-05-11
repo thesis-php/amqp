@@ -45,8 +45,7 @@
             "Thesis\\Amqp\\": "src/"
         },
         "files": [
-            "src/Internal/functions.php",
-            "src/Internal/Rpc/rpc.php"
+            "src/Internal/functions.php"
         ]
     },
     "autoload-dev": {

@@ -7,6 +7,7 @@ use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Message;
+use Thesis\Amqp\Rpc;
 use function Amp\trapSignal;
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -23,7 +24,7 @@ $channel->consume(
     noAck: true,
 );
 
-$rpc = $client->rpc();
+$rpc = new Rpc($client);
 
 for ($i = 0; $i < 100; ++$i) {
     dump($rpc->request(new Message("Request#{$i}"), routingKey: $queue->name, cancellation: new TimeoutCancellation(2))->body);

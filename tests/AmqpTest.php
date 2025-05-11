@@ -1077,7 +1077,7 @@ final class AmqpTest extends TestCase
             noAck: true,
         );
 
-        $rpc = $this->client->rpc();
+        $rpc = new Rpc($this->client);
 
         $received = [];
         $expected = [];
@@ -1111,7 +1111,7 @@ final class AmqpTest extends TestCase
             noAck: true,
         );
 
-        $rpc = $this->client->rpc();
+        $rpc = new Rpc($this->client);
 
         $request1 = async($rpc->request(...), new Message('1', correlationId: 'xyz'), routingKey: $queue->name);
         $request2 = async($rpc->request(...), new Message('2', correlationId: 'xyz'), routingKey: $queue->name);

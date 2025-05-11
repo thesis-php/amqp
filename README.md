@@ -1024,18 +1024,22 @@ use Amp\TimeoutCancellation;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\Message;
+use Thesis\Amqp\Rpc;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$rpc = $client->rpc();
+$rpc = new Rpc($client);
 
 for ($i = 0; $i < 100; ++$i) {
     dump($rpc->request(new Message("Request#{$i}"), routingKey: 'some_queue', cancellation: new TimeoutCancellation(2))->body);
 }
+
+$rpc->close();
+$client->disconnect();
 ```
 
-Our `RpcHandler` will create a temporary queue named like `thesis.rpc.{random}` and include its name in the `reply-to` header, along with a unique identifier in the `correlation-id` header, which your consumers should use to send the response.
+Our `Rpc` will create a temporary queue named like `thesis.rpc.{random}` and include its name in the `reply-to` header, along with a unique identifier in the `correlation-id` header, which your consumers should use to send the response.
 In this case, it's more accurate to refer to your consumers as `responders`. These responders should consume messages from the durable `some_queue` in `noAck` mode and send responses.
 
 To avoid manually filling in response headers or figuring out the correct reply queue, you can use the `DeliveryMessage::reply()` method, which will automatically send the message back to the appropriate queue. Here's how your responders should look:
@@ -1081,11 +1085,12 @@ use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\RpcConfig;
 use Thesis\Time\TimeSpan;
+use Thesis\Amqp\Rpc;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$rpc = $client->rpc(new RpcConfig(timeout: TimeSpan::fromSeconds(5)));
+$rpc = new Rpc($client, new RpcConfig(timeout: TimeSpan::fromSeconds(5)));
 ```
 
 Or you can specify a specific `Cancellation` for a request (which can be a signal or a timeout):
@@ -1099,18 +1104,22 @@ use Amp\TimeoutCancellation;
 use Thesis\Amqp\Client;
 use Thesis\Amqp\Config;
 use Thesis\Amqp\Message;
+use Thesis\Amqp\Rpc;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $client = new Client(Config::default());
-$rpc = $client->rpc();
+$rpc = new Rpc($client);
 
 for ($i = 0; $i < 100; ++$i) {
     dump($rpc->request(new Message("Request#{$i}"), routingKey: 'some_queue', cancellation: new TimeoutCancellation(2))->body);
 }
+
+$rpc->close();
+$client->disconnect();
 ```
 
-> ⚠️ Important: the `RpcHandler` implements idempotency: if multiple requests with the same `correlationId` arrive simultaneously, they will receive the same result from the very first request.
+> ⚠️ Important: the `Rpc` implements idempotency: if multiple requests with the same `correlationId` arrive simultaneously, they will receive the same result from the very first request.
 
 ## License
 
