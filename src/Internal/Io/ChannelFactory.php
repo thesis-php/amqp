@@ -64,6 +64,7 @@ final class ChannelFactory
             }
         } finally {
             $this->channels = [];
+            $this->channelId = 1;
         }
     }
 

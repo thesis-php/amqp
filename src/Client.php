@@ -78,6 +78,7 @@ final class Client
             $this->disconnection->await($cancellation);
         } finally {
             $this->disconnection = null;
+            $this->hooks->complete();
         }
     }
 

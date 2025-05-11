@@ -27,6 +27,10 @@ final class ReturnListener
                 }
             }
         });
+
+        $supervisor->addShutdownListener(static function () use (&$callbacks): void {
+            $callbacks = [];
+        });
     }
 
     /**

@@ -26,6 +26,10 @@ final class Consumer
                 $consumer($delivery, $channel);
             }
         });
+
+        $supervisor->addShutdownListener(static function () use (&$consumers): void {
+            $consumers = [];
+        });
     }
 
     /**
@@ -43,5 +47,15 @@ final class Consumer
     public function unregister(string $consumerTag): void
     {
         unset($this->consumers[$consumerTag]);
+    }
+
+    /**
+     * @param callable(non-empty-string): void $cancel
+     */
+    public function cancelAll(callable $cancel): void
+    {
+        foreach (array_keys($this->consumers) as $consumerTag) {
+            $cancel($consumerTag);
+        }
     }
 }

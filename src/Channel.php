@@ -783,6 +783,7 @@ final class Channel
         $this->hooks->reject($this->channelId, $e);
         $this->hooks->unsubscribe($this->channelId);
         $this->cancellations->cancelAll(error: $e);
+        $this->supervisor->stop();
         $this->closed = new Sync\Once(static fn(): bool => true);
     }
 
@@ -837,11 +838,16 @@ final class Channel
      */
     private function doClose(int $replyCode = 200, string $replyText = ''): bool
     {
+        $this->consumer->cancelAll($this->cancel(...));
         $this->supervisor->stop();
 
-        $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
+        try {
+            $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
 
-        $this->await(Frame\ChannelCloseOk::class);
+            $this->await(Frame\ChannelCloseOk::class);
+        } finally {
+            $this->hooks->unsubscribe($this->channelId);
+        }
 
         return true;
     }
