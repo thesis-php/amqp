@@ -4,7 +4,6 @@ parameters:
         - src
         - tests
         - examples
-        - benchmark
     checkBenevolentUnionTypes: true
     editorUrl: ''
     editorUrlTitle: '%%file%%:%%line%%'

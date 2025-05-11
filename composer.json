@@ -37,7 +37,7 @@
     },
     "require-dev": {
         "bamarni/composer-bin-plugin": "^1.8.2",
-        "dragon-code/benchmark": "^3.1",
+        "phpbench/phpbench": "^1.4",
         "phpunit/phpunit": "^12.1.4",
         "symfony/var-dumper": "^6.4.15 || ^7.2.6"
     },
@@ -73,6 +73,7 @@
     },
     "scripts": {
         "analyse-deps": "tools/composer-dependency-analyser/vendor/bin/composer-dependency-analyser",
+        "bench": "./vendor/bin/phpbench run tests/Benchmark",
         "check": [
             "@composer fixcs -- --dry-run",
             "@composer rector -- --dry-run",
@@ -80,7 +81,8 @@
             "@composer validate",
             "@composer normalize --dry-run",
             "@analyse-deps",
-            "@test"
+            "@test",
+            "@bench"
         ],
         "fixcs": "tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --verbose",
         "infection": "tools/infection/vendor/bin/infection --show-mutations",
