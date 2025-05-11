@@ -71,7 +71,6 @@ final class Client
         $this->disconnection ??= new Sync\Once(function () use ($connection, $replyCode, $replyText, $cancellation): void {
             $this->channelFactory->close($replyCode, $replyText);
             $this->connectionFactory->close($connection, $replyCode, $replyText, $cancellation);
-
             $this->connection = null;
         });
 
