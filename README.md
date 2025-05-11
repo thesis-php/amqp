@@ -523,6 +523,8 @@ $delivery = $channel->get('service.a.events', noAck: true);
 var_dump($delivery?->message);
 ```
 
+It is safe to call `Channel::get()` concurrently.
+
 #### ack
 
 `ack` can be called on a `Delivery` object.

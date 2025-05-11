@@ -7,6 +7,7 @@ namespace Thesis\Amqp;
 use Amp\Cancellation;
 use Amp\NullCancellation;
 use Revolt\EventLoop;
+use Thesis\Amqp\Internal\AtomicGet;
 use Thesis\Amqp\Internal\Batch\BatchConsumer;
 use Thesis\Amqp\Internal\Batch\ConsumeBatchOptions;
 use Thesis\Amqp\Internal\Cancellation\CancellationStorage;
@@ -24,6 +25,8 @@ use Thesis\Amqp\Internal\Properties;
 use Thesis\Amqp\Internal\Protocol;
 use Thesis\Amqp\Internal\Protocol\Frame;
 use Thesis\Amqp\Internal\Returns;
+use Thesis\Sync;
+use function Amp\weakClosure;
 
 /**
  * @api
@@ -39,17 +42,18 @@ final class Channel
 
     private readonly Consumer $consumer;
 
-    private readonly Receiver $receiver;
-
     private readonly ConsumerTagGenerator $consumerTags;
 
     private readonly ConfirmationListener $confirms;
 
     private readonly CancellationStorage $cancellations;
 
+    private readonly AtomicGet $get;
+
     private ChannelMode $mode = ChannelMode::Regular;
 
-    private bool $closed = false;
+    /** @var ?Sync\Once<bool> */
+    private ?Sync\Once $closed = null;
 
     /**
      * @param non-negative-int $channelId
@@ -63,7 +67,7 @@ final class Channel
         $this->supervisor = new DeliverySupervisor($this, $this->hooks, $this->channelId);
         $this->consumerTags = new ConsumerTagGenerator();
         $this->consumer = new Consumer($this->supervisor);
-        $this->receiver = new Receiver($this->supervisor);
+        $this->get = new AtomicGet(new Receiver($this->supervisor), $this->connection, $this->channelId);
         $this->returns = new Returns\ReturnListener($this->supervisor);
         $this->boundedReturns = new Returns\FutureBoundedReturnListener($this->supervisor);
         $this->confirms = new ConfirmationListener($this->hooks, $this->channelId);
@@ -149,24 +153,9 @@ final class Channel
     /**
      * @throws \Throwable
      */
-    public function get(string $queue = '', bool $noAck = false): ?DeliveryMessage
+    public function get(string $queue = '', bool $noAck = false, ?Cancellation $cancellation = null): ?DeliveryMessage
     {
-        static $permit = true;
-        if (!$permit) {
-            throw Exception\OperationNotPermitted::forGet($this->channelId);
-        }
-
-        $permit = false;
-
-        $this->connection->writeFrame(Protocol\Method::basicGet(
-            channelId: $this->channelId,
-            queue: $queue,
-            noAck: $noAck,
-        ));
-
-        [$delivery, $permit] = [$this->receiver->receive(), true];
-
-        return $delivery;
+        return $this->get->receive($queue, $noAck, $cancellation);
     }
 
     /**
@@ -416,6 +405,9 @@ final class Channel
      */
     public function cancel(string $consumerTag, bool $noWait = false): void
     {
+        $this->consumer->unregister($consumerTag);
+        $this->cancellations->cancel($consumerTag, $noWait);
+
         $this->connection->writeFrame(Protocol\Method::basicCancel(
             channelId: $this->channelId,
             consumerTag: $consumerTag,
@@ -425,9 +417,6 @@ final class Channel
         if (!$noWait) {
             $this->await(Frame\BasicCancelOk::class);
         }
-
-        $this->consumer->unregister($consumerTag);
-        $this->cancellations->cancel($consumerTag, $noWait);
     }
 
     /**
@@ -768,23 +757,15 @@ final class Channel
 
     public function isClosed(): bool
     {
-        return $this->closed;
+        return $this->closed?->await() ?? false;
     }
 
     /**
      * @param non-negative-int $replyCode
-     * @throws \Throwable
      */
-    public function close(int $replyCode = 200, string $replyText = ''): void
+    public function close(int $replyCode = 200, string $replyText = '', ?Cancellation $cancellation = null): void
     {
-        if (!$this->closed) {
-            $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
-
-            $this->await(Frame\ChannelCloseOk::class);
-
-            $this->supervisor->stop();
-            $this->closed = true;
-        }
+        ($this->closed ??= new Sync\Once(weakClosure(fn(): bool => $this->doClose($replyCode, $replyText))))->await($cancellation);
     }
 
     /**
@@ -802,7 +783,7 @@ final class Channel
         $this->hooks->reject($this->channelId, $e);
         $this->hooks->unsubscribe($this->channelId);
         $this->cancellations->cancelAll(error: $e);
-        $this->closed = true;
+        $this->closed = new Sync\Once(static fn(): bool => true);
     }
 
     /**
@@ -849,5 +830,19 @@ final class Channel
         return $this->hooks
             ->oneshot($this->channelId, $frameType)
             ->await($cancellation);
+    }
+
+    /**
+     * @param non-negative-int $replyCode
+     */
+    private function doClose(int $replyCode = 200, string $replyText = ''): bool
+    {
+        $this->supervisor->stop();
+
+        $this->connection->writeFrame(Protocol\Method::channelClose($this->channelId, $replyCode, $replyText));
+
+        $this->await(Frame\ChannelCloseOk::class);
+
+        return true;
     }
 }

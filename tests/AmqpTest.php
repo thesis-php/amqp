@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Amqp;
 
 use Amp\DeferredFuture;
+use Amp\Future;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -229,6 +230,31 @@ final class AmqpTest extends TestCase
         $delivery->ack();
 
         self::assertSame(0, $channel->queueDeclare($queue, passive: true, autoDelete: true)->messages);
+
+        $channel->close();
+    }
+
+    public function testConcurrentGet(): void
+    {
+        $channel = $this->client->channel();
+
+        $queue = $channel->queueDeclare(autoDelete: true);
+
+        $channel->publishBatch([
+            new PublishMessage(new Message('1'), routingKey: $queue->name),
+            new PublishMessage(new Message('2'), routingKey: $queue->name),
+        ]);
+
+        $future1 = async($channel->get(...), $queue->name);
+        $future2 = async($channel->get(...), $queue->name);
+
+        [$message1, $message2] = Future\await([$future1, $future2]);
+
+        $message1?->ack();
+        $message2?->ack();
+
+        self::assertSame(['1', '2'], [$message1?->message->body, $message2?->message->body]);
+        self::assertSame(0, $channel->queueDelete($queue->name));
 
         $channel->close();
     }
@@ -1035,5 +1061,17 @@ final class AmqpTest extends TestCase
         $delivery->ack();
 
         $channel->close();
+    }
+
+    public function testChannelClose(): void
+    {
+        $channel = $this->client->channel();
+        self::assertFalse($channel->isClosed());
+
+        $future1 = async($channel->close(...));
+        $future2 = async($channel->isClosed(...));
+
+        [, $isClosed] = Future\await([$future1, $future2]);
+        self::assertTrue($isClosed);
     }
 }
