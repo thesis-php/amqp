@@ -12,6 +12,7 @@ Pure asynchronous (fiber based) strictly typed full-featured PHP driver for AMQP
 - [A more convenient way to work with transactions](examples/transactional.php)
 - [Consume messages as concurrent iterator](examples/consumeIterator.php)
 - [Consume messages in batch](examples/consumeBatch.php)
+- [Native support for RPC](#rpc)
 
 ## Installation
 
@@ -29,6 +30,7 @@ composer require thesis/amqp
 - [Consume a batch of messages](#consume-a-batch-of-messages)
 - [Confirms](#confirms)
 - [Explicit returns](#explicit-returns)
+- [RPC](#rpc)
 - [License](#license)
 
 ### Configuration
@@ -333,6 +335,86 @@ if ($confirmation?->await() === PublishResult::Unrouted) {
 ```
 
 > This mechanism only works if `publisher confirms` are enabled. Without them the library cannot track which messages were successfully published to queues, because no frame will receive.
+
+### RPC
+
+Although AMQP doesn't provide a native way to perform RPC, there is a documented algorithm that uses the `reply-to` and `correlation-id` headers to implement it.
+Since this algorithm can be difficult to implement for inexperienced users — especially given the asynchronous nature of our driver — our library handles it for you.
+An example of how to use it can be found [here](examples/rpc.php).
+
+Our `Rpc` will create a temporary queue named like `thesis.rpc.{random}` (you can inject your name) and include its name in the `reply-to` header, along with a unique identifier in the `correlation-id` header, which your consumers should use to send the response.
+In this case, it's more accurate to refer to your consumers as `responders`. These responders should consume messages from the durable `some_queue` in `noAck` mode and send responses.
+
+To avoid manually filling in response headers or figuring out the correct reply queue, you can use the `DeliveryMessage::reply()` method, which will automatically send the message back to the appropriate queue. Here's how your responders should look:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Config;
+use Thesis\Amqp\DeliveryMessage;
+use Thesis\Amqp\Message;
+use function Amp\trapSignal;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$client = new Client(Config::default());
+$channel = $client->channel();
+
+$channel->consume(
+    callback: static function (DeliveryMessage $delivery): void {
+        $delivery->reply(new Message("Request '{$delivery->message->body}' handled."));
+    },
+    queue: 'some_queue',
+    noAck: true,
+);
+
+trapSignal([\SIGINT, \SIGTERM]);
+
+$client->disconnect();
+```
+
+Since responders may be unavailable, we risk "hanging" indefinitely if we don't control the request execution time — just like in any `HTTP/gRPC` client.
+You can configure a global timeout using `RpcConfig` as follows:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Thesis\Amqp\Client;
+use Thesis\Amqp\Config;
+use Thesis\Amqp\RpcConfig;
+use Thesis\Time\TimeSpan;
+use Thesis\Amqp\Rpc;
+
+$client = new Client(Config::default());
+$rpc = new Rpc($client, new RpcConfig(timeout: TimeSpan::fromSeconds(5)));
+```
+
+Or you can specify a specific `Cancellation` for a request (which can be a signal or a timeout):
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Amp\TimeoutCancellation;
+use Thesis\Amqp\Message;
+
+echo $rpc
+    ->request(
+        message: new Message("Request#{$i}"),
+        routingKey: 'some_queue',
+        cancellation: new TimeoutCancellation(2),
+    )
+    ->body;
+```
+
+> The `Rpc` implements idempotency: if multiple requests with the same `correlationId` arrive simultaneously, they will receive the same result from the very first request.
+
 
 ## License
 

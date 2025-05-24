@@ -32,6 +32,7 @@ final readonly class MessageProperties
      * @param non-negative-int $bodyLen
      * @param array<string, mixed> $headers
      * @param ?int<0, 9> $priority
+     * @param ?non-empty-string $correlationId
      */
     private function __construct(
         public int $bodyLen = 0,
@@ -97,7 +98,7 @@ final readonly class MessageProperties
             $mask |= self::FLAG_PRIORITY;
         }
 
-        if ($this->correlationId !== null && $this->correlationId !== '') {
+        if ($this->correlationId !== null) {
             $mask |= self::FLAG_CORRELATION_ID;
         }
 
@@ -163,7 +164,7 @@ final readonly class MessageProperties
             ++$size;
         }
 
-        if ($this->correlationId !== null && $this->correlationId !== '') {
+        if ($this->correlationId !== null) {
             $size += 1 + \strlen($this->correlationId);
         }
 
@@ -270,6 +271,7 @@ final readonly class MessageProperties
         $deliveryMode = self::hasSet($mask, self::FLAG_DELIVERY_MODE) ? (DeliveryMode::tryFrom($reader->readUint8()) ?: DeliveryMode::Whatever) : DeliveryMode::Whatever;
         /** @var ?int<0, 9> $priority */
         $priority = self::hasSet($mask, self::FLAG_PRIORITY) ? $reader->readUint8() : null;
+        /** @var non-empty-string $correlationId */
         $correlationId = self::hasSet($mask, self::FLAG_CORRELATION_ID) ? $reader->readString() : null;
         $replyTo = self::hasSet($mask, self::FLAG_REPLY_TO) ? $reader->readString() : null;
         $expiration = self::hasSet($mask, self::FLAG_EXPIRATION) ? TimeSpan::fromMilliseconds((int) $reader->readString()) : null;

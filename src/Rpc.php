@@ -16,10 +16,7 @@ use function Amp\weakClosure;
 final class Rpc
 {
     /** @var ?Sync\Once<Channel> */
-    private ?Sync\Once $connection = null;
-
-    /** @var ?Sync\Once<void> */
-    private ?Sync\Once $disconnection = null;
+    private ?Sync\Once $channel = null;
 
     private ?Client $consumerClient = null;
 
@@ -33,7 +30,7 @@ final class Rpc
         private readonly Client $client,
         private readonly RpcConfig $config = new RpcConfig(),
     ) {
-        $this->replyTo = self::generateReplyTo();
+        $this->replyTo = $this->config->replyTo ?? self::generateReplyTo();
     }
 
     public function request(
@@ -46,7 +43,7 @@ final class Rpc
     ): Message {
         $publishChannel = $this->channel($cancellation);
 
-        $correlationId = $message->correlationId ?: self::generateId();
+        $correlationId = $message->correlationId ?? self::generateId();
 
         /** @var ?DeferredFuture<Message> $deferred */
         $deferred = $this->futures[$correlationId] ?? null;
@@ -79,16 +76,20 @@ final class Rpc
 
     public function close(?Cancellation $cancellation = null): void
     {
-        $this->connection?->await($cancellation);
+        $channel = $this->channel?->await($cancellation);
 
-        try {
-            ($this->disconnection ??= new Sync\Once(weakClosure($this->shutdown(...))))->await($cancellation);
-        } finally {
-            $this->disconnection = null;
-            $this->connection = null;
+        if ($channel === null || $this->channel === null) {
+            return;
         }
+
+        $this->channel = null;
+        $channel->close(cancellation: $cancellation);
+        $this->consumerClient?->disconnect(cancellation: $cancellation);
     }
 
+    /**
+     * @param non-empty-string $correlationId
+     */
     private function createMessage(Message $message, string $correlationId): Message
     {
         return new Message(
@@ -111,7 +112,7 @@ final class Rpc
 
     private function channel(?Cancellation $cancellation = null): Channel
     {
-        return ($this->connection ??= new Sync\Once(weakClosure($this->setup(...))))->await($cancellation);
+        return ($this->channel ??= new Sync\Once(weakClosure($this->setup(...))))->await($cancellation);
     }
 
     private function setup(): Channel
@@ -140,12 +141,6 @@ final class Rpc
         );
 
         return $publishChannel;
-    }
-
-    private function shutdown(): void
-    {
-        $this->connection?->await()->close();
-        $this->consumerClient?->disconnect();
     }
 
     /**

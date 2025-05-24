@@ -14,6 +14,7 @@ final readonly class Message
     /**
      * @param array<string, mixed> $headers
      * @param ?int<0, 9> $priority
+     * @param ?non-empty-string $correlationId
      */
     public function __construct(
         public string $body = '',

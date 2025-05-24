@@ -799,6 +799,7 @@ final class AmqpTest extends TestCase
     /**
      * @param non-empty-string $queue
      * @param ?int<0, 9> $priority
+     * @param ?non-empty-string $correlationId
      * @param array<string, mixed> $headers
      */
     #[TestWith([
