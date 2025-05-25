@@ -72,14 +72,8 @@ final class Rpc
 
     public function close(?Cancellation $cancellation = null): void
     {
-        $channel = $this->channel?->await($cancellation);
-
-        if ($channel === null || $this->channel === null) {
-            return;
-        }
-
-        $this->channel = null;
-        $channel->close(cancellation: $cancellation);
+        [$channel, $this->channel] = [$this->channel, null];
+        $channel?->await($cancellation)->close(cancellation: $cancellation);
     }
 
     /**
@@ -107,7 +101,7 @@ final class Rpc
 
     private function channel(?Cancellation $cancellation = null): Channel
     {
-        return ($this->channel ??= new Sync\Once(weakClosure($this->setup(...))))->await($cancellation);
+        return ($this->channel ??= new Sync\Once(weakClosure($this->setup(...)), static fn(Channel $channel): bool => !$channel->isClosed()))->await($cancellation);
     }
 
     private function setup(): Channel
