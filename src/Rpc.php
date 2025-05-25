@@ -18,10 +18,8 @@ final class Rpc
     /** @var ?Sync\Once<Channel> */
     private ?Sync\Once $channel = null;
 
-    private ?Client $consumerClient = null;
-
     /** @var non-empty-string */
-    private readonly string $replyTo;
+    private string $replyTo;
 
     /** @var array<non-empty-string, DeferredFuture<Message>> */
     private array $futures = [];
@@ -29,9 +27,7 @@ final class Rpc
     public function __construct(
         private readonly Client $client,
         private readonly RpcConfig $config = new RpcConfig(),
-    ) {
-        $this->replyTo = $this->config->replyTo ?? self::generateReplyTo();
-    }
+    ) {}
 
     public function request(
         Message $message,
@@ -41,7 +37,7 @@ final class Rpc
         bool $immediate = false,
         ?Cancellation $cancellation = null,
     ): Message {
-        $publishChannel = $this->channel($cancellation);
+        $channel = $this->channel($cancellation);
 
         $correlationId = $message->correlationId ?? self::generateId();
 
@@ -53,7 +49,7 @@ final class Rpc
             $deferred = new DeferredFuture();
             $this->futures[$correlationId] = $deferred;
 
-            $publishChannel
+            $channel
                 ->publish(
                     message: $this->createMessage($message, $correlationId),
                     exchange: $exchange,
@@ -84,7 +80,6 @@ final class Rpc
 
         $this->channel = null;
         $channel->close(cancellation: $cancellation);
-        $this->consumerClient?->disconnect(cancellation: $cancellation);
     }
 
     /**
@@ -117,22 +112,21 @@ final class Rpc
 
     private function setup(): Channel
     {
-        $publishChannel = $this->client->channel();
+        $channel = $this->client->channel();
 
         if ($this->config->confirms) {
-            $publishChannel->confirmSelect();
+            $channel->confirmSelect();
         }
 
-        $this->consumerClient = new Client($this->client->config);
-        $consumeChannel = $this->consumerClient->channel();
+        $this->replyTo = $channel
+            ->queueDeclare(
+                queue: ($this->config->generateReplyTo ?? self::generateReplyTo(...))(),
+                exclusive: true,
+                autoDelete: true,
+            )
+            ->name;
 
-        $consumeChannel->queueDeclare(
-            queue: $this->replyTo,
-            exclusive: true,
-            autoDelete: true,
-        );
-
-        $consumeChannel->consume(
+        $channel->consume(
             callback: function (DeliveryMessage $delivery): void {
                 ($this->futures[$delivery->message->correlationId ?? ''] ?? null)?->complete($delivery->message);
             },
@@ -140,7 +134,7 @@ final class Rpc
             noAck: true,
         );
 
-        return $publishChannel;
+        return $channel;
     }
 
     /**

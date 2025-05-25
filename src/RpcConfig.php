@@ -16,11 +16,11 @@ final readonly class RpcConfig
     public TimeSpan $timeout;
 
     /**
-     * @param ?non-empty-string $replyTo temporary queue name, must be unique for all instances of the application
+     * @param ?callable(): string $generateReplyTo generate temporary queue name, must be unique for all instances of the application
      */
     public function __construct(
         public bool $confirms = true,
-        public ?string $replyTo = null,
+        public mixed $generateReplyTo = null,
         ?TimeSpan $timeout = null,
     ) {
         $this->timeout = $timeout ?? TimeSpan::fromSeconds(self::DEFAULT_TIMEOUT);

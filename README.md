@@ -338,11 +338,11 @@ if ($confirmation?->await() === PublishResult::Unrouted) {
 
 ### RPC
 
-Although AMQP doesn't provide a native way to perform RPC, there is a documented algorithm that uses the `reply-to` and `correlation-id` headers to implement it.
+Although AMQP doesn't provide a native way to perform RPC, there is a documented [algorithm](https://www.rabbitmq.com/docs/direct-reply-to) that uses the `reply-to` and `correlation-id` headers to implement it.
 Since this algorithm can be difficult to implement for inexperienced users — especially given the asynchronous nature of our driver — our library handles it for you.
 An example of how to use it can be found [here](examples/rpc.php).
 
-Our `Rpc` will create a temporary queue named like `thesis.rpc.{random}` (you can inject your name) and include its name in the `reply-to` header, along with a unique identifier in the `correlation-id` header, which your consumers should use to send the response.
+Our `Rpc` will create a temporary queue named like `thesis.rpc.{random}` (you can inject your name using `RpcConfig`) and include its name in the `reply-to` header, along with a unique identifier in the `correlation-id` header, which your consumers should use to send the response.
 In this case, it's more accurate to refer to your consumers as `responders`. These responders should consume messages from the durable `some_queue` in `noAck` mode and send responses.
 
 To avoid manually filling in response headers or figuring out the correct reply queue, you can use the `DeliveryMessage::reply()` method, which will automatically send the message back to the appropriate queue. Here's how your responders should look:
