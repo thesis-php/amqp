@@ -50,6 +50,6 @@ final class ConsumeBatch implements
 
     private function watermark(): DeliveryMessage
     {
-        return $this->deliveries[\count($this->deliveries) - 1];
+        return $this->deliveries[$this->count() - 1];
     }
 }
