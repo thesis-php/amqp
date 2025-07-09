@@ -27,24 +27,22 @@ final class Client
     /** @var ?Sync\Once<void> */
     private ?Sync\Once $disconnection = null;
 
-    private readonly Properties $properties;
-
     private readonly Hooks $hooks;
 
     public function __construct(
         public readonly Config $config,
     ) {
-        $this->properties = Properties::createDefault();
+        $properties = Properties::createDefault();
         $this->hooks = new Hooks();
 
         $this->connectionFactory = new AmqpConnectionFactory(
             $this->config,
-            $this->properties,
+            $properties,
             $this->hooks,
         );
 
         $this->channelFactory = new ChannelFactory(
-            $this->properties,
+            $properties,
             $this->hooks,
         );
     }
