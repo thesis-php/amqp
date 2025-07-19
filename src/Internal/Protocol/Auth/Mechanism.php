@@ -18,8 +18,13 @@ abstract class Mechanism
     /**
      * @param non-empty-string $mechanism
      */
-    final public static function create(string $mechanism, string $username, string $password): Plain|AMQPlain
-    {
+    final public static function create(
+      string $mechanism,
+      #[\SensitiveParameter]
+      string $username,
+      #[\SensitiveParameter]
+      string $password,
+    ): Plain|AMQPlain  {
         return match (strtoupper($mechanism)) {
             self::PLAIN => new Plain($username, $password),
             self::AMQPLAIN => new AMQPlain($username, $password),

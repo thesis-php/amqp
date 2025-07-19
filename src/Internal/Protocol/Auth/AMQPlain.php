@@ -12,7 +12,9 @@ use Thesis\Amqp\Internal\Io;
 final class AMQPlain extends Mechanism
 {
     public function __construct(
+        #[\SensitiveParameter]
         private readonly string $username,
+        #[\SensitiveParameter]
         private readonly string $password,
     ) {}
 
