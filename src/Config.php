@@ -24,7 +24,10 @@ final readonly class Config
     private const int MAX_CHANNEL = 0xFFFF;
     private const int MAX_FRAME = 0xFFFF;
 
-    /** @var non-empty-list<Mechanism> */
+    /**
+     * @internal
+     * @var non-empty-list<Mechanism>
+     */
     public array $sasl;
 
     /**
@@ -245,6 +248,7 @@ final readonly class Config
     }
 
     /**
+     * @internal
      * @return non-negative-int
      */
     public function heartbeat(int $suggestHeartbeat): int
@@ -256,6 +260,7 @@ final readonly class Config
     }
 
     /**
+     * @internal
      * @return non-negative-int
      */
     public function channelMax(int $suggestChannelMax): int
@@ -267,6 +272,7 @@ final readonly class Config
     }
 
     /**
+     * @internal
      * @return positive-int
      */
     public function frameMax(int $suggestFrameMax): int
@@ -278,6 +284,7 @@ final readonly class Config
     }
 
     /**
+     * @internal
      * @return iterable<non-empty-string>
      */
     public function connectionUrls(): iterable
@@ -289,5 +296,14 @@ final readonly class Config
 
             yield $url;
         }
+    }
+
+    /**
+     * @deprecated since 1.0.2, use {@see Config::$sasl} property
+     * @return non-empty-list<Mechanism>
+     */
+    public function sasl(): array
+    {
+        return $this->sasl;
     }
 }
