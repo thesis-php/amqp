@@ -39,7 +39,9 @@ final readonly class Config
     public function __construct(
         public Scheme $scheme = Scheme::amqp,
         public array $urls = [self::DEFAULT_URL],
+        #[\SensitiveParameter]
         public string $user = self::DEFAULT_USERNAME,
+        #[\SensitiveParameter]
         public string $password = self::DEFAULT_PASSWORD,
         public string $vhost = self::DEFAULT_VHOST,
         public ?string $certFile = null,
