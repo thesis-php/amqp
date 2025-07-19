@@ -13,7 +13,7 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 final readonly class ChannelOpen implements Frame
 {
     public function __construct(
-        private string $reserved1 = '',
+        public string $reserved1 = '',
     ) {}
 
     public static function read(Io\ReadBytes $reader): self

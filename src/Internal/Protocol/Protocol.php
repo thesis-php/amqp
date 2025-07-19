@@ -15,10 +15,10 @@ enum Protocol
     case amqp091;
 
     /** @var non-negative-int */
-    public const FRAME_END = 206;
+    public const int FRAME_END = 206;
 
     /** @var array<ClassType::*, array<ClassMethod::*, class-string<Frame>>> */
-    private const METHODS = [
+    private const array METHODS = [
         ClassType::CONNECTION => [
             ClassMethod::CONNECTION_START => Frame\ConnectionStart::class,
             ClassMethod::CONNECTION_TUNE => Frame\ConnectionTune::class,

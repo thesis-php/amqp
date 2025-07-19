@@ -92,9 +92,9 @@ final class ConfigTest extends TestCase
         self::assertSame(8, $config->channelMax);
         self::assertEquals(20, $config->connectionTimeout);
         self::assertSame(10, $config->frameMax);
-        self::assertCount(2, $config->sasl());
-        self::assertInstanceOf(Plain::class, $config->sasl()[0]);
-        self::assertInstanceOf(AMQPlain::class, $config->sasl()[1]);
+        self::assertCount(2, $config->sasl);
+        self::assertInstanceOf(Plain::class, $config->sasl[0]);
+        self::assertInstanceOf(AMQPlain::class, $config->sasl[1]);
         self::assertFalse($config->tcpNoDelay);
     }
 

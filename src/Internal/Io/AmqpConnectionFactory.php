@@ -34,7 +34,7 @@ final readonly class AmqpConnectionFactory
 
         $tune = $connection->rpc(
             Protocol\Method::connectionStartOk($this->properties->toArray(), Auth\Mechanism::select(
-                $this->config->sasl(),
+                $this->config->sasl,
                 $start->mechanisms,
             )),
             Frame\ConnectionTune::class,

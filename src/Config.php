@@ -25,7 +25,7 @@ final readonly class Config
     private const int MAX_FRAME = 0xFFFF;
 
     /** @var non-empty-list<Mechanism> */
-    private array $sasl;
+    public array $sasl;
 
     /**
      * @param non-empty-list<non-empty-string> $urls
@@ -289,13 +289,5 @@ final readonly class Config
 
             yield $url;
         }
-    }
-
-    /**
-     * @return non-empty-list<Mechanism>
-     */
-    public function sasl(): array
-    {
-        return $this->sasl;
     }
 }
