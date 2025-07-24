@@ -61,7 +61,7 @@ final readonly class AmqpConnectionFactory
             Frame\ConnectionOpenOk::class,
         );
 
-        $connection->ioLoop($this->hooks);
+        $connection->setup();
 
         $this->hooks->anyOf(0, Frame\ConnectionClose::class, static function () use ($connection): void {
             $connection->writeFrame(Protocol\Method::connectionCloseOk());
@@ -93,7 +93,7 @@ final readonly class AmqpConnectionFactory
 
         foreach ($this->config->connectionUrls() as $url) {
             try {
-                return new AmqpConnection($this->createSocket($url));
+                return new AmqpConnection($this->createSocket($url), $this->hooks);
             } catch (\Throwable $e) {
                 $exceptions[] = "{$url}: {$e->getMessage()}";
             }
@@ -109,7 +109,7 @@ final readonly class AmqpConnectionFactory
      */
     private function createSocket(string $url): Socket\Socket
     {
-        $context = (new Socket\ConnectContext())
+        $context = new Socket\ConnectContext()
             ->withConnectTimeout($this->config->connectionTimeout);
 
         if ($this->config->tcpNoDelay) {

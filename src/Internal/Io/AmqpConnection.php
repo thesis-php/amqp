@@ -33,6 +33,7 @@ final class AmqpConnection implements Writer
 
     public function __construct(
         private readonly Socket $socket,
+        private readonly Hooks $hooks,
     ) {
         $this->buffer = Buffer::empty();
         $this->reader = new Protocol\Reader(
@@ -91,8 +92,9 @@ final class AmqpConnection implements Writer
         $this->lastWrite = Amp\now();
     }
 
-    public function ioLoop(Hooks $hooks): void
+    public function setup(): void
     {
+        $hooks = $this->hooks;
         $reader = $this->reader;
         $isClosed = &$this->closed;
 
