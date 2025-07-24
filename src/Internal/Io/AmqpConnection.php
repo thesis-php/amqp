@@ -8,6 +8,7 @@ use Amp;
 use Amp\Socket\Socket;
 use Revolt\EventLoop;
 use Thesis\AmpBridge\ReaderWriter as AmpReaderWriter;
+use Thesis\Amqp\Exception\ConnectionIsBlocked;
 use Thesis\Amqp\Exception\UnexpectedFrameReceived;
 use Thesis\Amqp\Internal\Hooks;
 use Thesis\Amqp\Internal\Protocol;
@@ -28,6 +29,11 @@ final class AmqpConnection implements Writer
     private ?string $heartbeatId = null;
 
     private float $lastWrite = 0;
+
+    /**
+     * @phpstan-ignore property.unusedType
+     */
+    private ?string $blockedReason = null;
 
     private bool $closed = false;
 
@@ -95,6 +101,25 @@ final class AmqpConnection implements Writer
     public function setup(): void
     {
         $hooks = $this->hooks;
+
+        $blockedReason = &$this->blockedReason;
+
+        $hooks->anyOf(
+            0,
+            Protocol\Frame\ConnectionBlocked::class,
+            static function (Protocol\Frame\ConnectionBlocked $blocked) use (&$blockedReason): void {
+                $blockedReason = $blocked->reason;
+            },
+        );
+
+        $hooks->anyOf(
+            0,
+            Protocol\Frame\ConnectionUnblocked::class,
+            static function () use (&$blockedReason): void {
+                $blockedReason = null;
+            },
+        );
+
         $reader = $this->reader;
         $isClosed = &$this->closed;
 
@@ -127,6 +152,13 @@ final class AmqpConnection implements Writer
                 $this->writeFrame(Protocol\Heartbeat::frame);
             }
         });
+    }
+
+    public function ensureNotBlocked(): void
+    {
+        if ($this->blockedReason !== null) {
+            throw new ConnectionIsBlocked($this->blockedReason);
+        }
     }
 
     public function close(): void
