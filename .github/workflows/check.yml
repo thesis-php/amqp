@@ -1,7 +1,7 @@
 on:
   workflow_dispatch: ~
   push:
-    branches: ['main', '*.*.x']
+    branches: ['main', '*.x']
   pull_request: ~
 
 jobs:
