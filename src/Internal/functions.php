@@ -59,8 +59,6 @@ function queryIterator(string $query): \Generator
 function chunks(string $v, int $length): iterable
 {
     foreach (str_split($v, $length) as $chunk) {
-        if ($chunk !== '') {
-            yield $chunk;
-        }
+        yield $chunk;
     }
 }
