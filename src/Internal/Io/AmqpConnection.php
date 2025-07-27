@@ -8,6 +8,9 @@ use Amp;
 use Amp\Socket\Socket;
 use Revolt\EventLoop;
 use Thesis\AmpBridge\ReaderWriter as AmpReaderWriter;
+use Thesis\Amqp\Event\ConnectionBlocked;
+use Thesis\Amqp\Event\ConnectionUnblocked;
+use Thesis\Amqp\EventDispatcher;
 use Thesis\Amqp\Exception\ConnectionIsBlocked;
 use Thesis\Amqp\Exception\UnexpectedFrameReceived;
 use Thesis\Amqp\Internal\Hooks;
@@ -40,6 +43,7 @@ final class AmqpConnection implements Writer
     public function __construct(
         private readonly Socket $socket,
         private readonly Hooks $hooks,
+        private readonly EventDispatcher $eventDispatcher,
     ) {
         $this->buffer = Buffer::empty();
         $this->reader = new Protocol\Reader(
@@ -101,22 +105,25 @@ final class AmqpConnection implements Writer
     public function setup(): void
     {
         $hooks = $this->hooks;
+        $eventDispatcher = $this->eventDispatcher;
 
         $blockedReason = &$this->blockedReason;
 
         $hooks->anyOf(
             0,
             Protocol\Frame\ConnectionBlocked::class,
-            static function (Protocol\Frame\ConnectionBlocked $blocked) use (&$blockedReason): void {
+            static function (Protocol\Frame\ConnectionBlocked $blocked) use (&$blockedReason, $eventDispatcher): void {
                 $blockedReason = $blocked->reason;
+                $eventDispatcher->dispatch(new ConnectionBlocked($blockedReason));
             },
         );
 
         $hooks->anyOf(
             0,
             Protocol\Frame\ConnectionUnblocked::class,
-            static function () use (&$blockedReason): void {
+            static function () use (&$blockedReason, $eventDispatcher): void {
                 $blockedReason = null;
+                $eventDispatcher->dispatch(new ConnectionUnblocked());
             },
         );
 

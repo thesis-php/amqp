@@ -7,6 +7,7 @@ namespace Thesis\Amqp\Internal\Io;
 use Amp\Cancellation;
 use Amp\Socket;
 use Thesis\Amqp\Config;
+use Thesis\Amqp\EventDispatcher;
 use Thesis\Amqp\Exception;
 use Thesis\Amqp\Internal\Hooks;
 use Thesis\Amqp\Internal\Properties;
@@ -24,6 +25,7 @@ final readonly class AmqpConnectionFactory
         private Config $config,
         private Properties $properties,
         private Hooks $hooks,
+        private EventDispatcher $eventDispatcher,
     ) {}
 
     public function connect(): AmqpConnection
@@ -93,7 +95,11 @@ final readonly class AmqpConnectionFactory
 
         foreach ($this->config->connectionUrls() as $url) {
             try {
-                return new AmqpConnection($this->createSocket($url), $this->hooks);
+                return new AmqpConnection(
+                    socket: $this->createSocket($url),
+                    hooks: $this->hooks,
+                    eventDispatcher: $this->eventDispatcher,
+                );
             } catch (\Throwable $e) {
                 $exceptions[] = "{$url}: {$e->getMessage()}";
             }

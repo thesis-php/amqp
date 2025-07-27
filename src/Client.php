@@ -31,14 +31,16 @@ final class Client
 
     public function __construct(
         public readonly Config $config,
+        public readonly EventDispatcher $eventDispatcher = new EventDispatcher(),
     ) {
         $properties = Properties::createDefault();
         $this->hooks = new Hooks();
 
         $this->connectionFactory = new AmqpConnectionFactory(
-            $this->config,
-            $properties,
-            $this->hooks,
+            config: $this->config,
+            properties: $properties,
+            hooks: $this->hooks,
+            eventDispatcher: $this->eventDispatcher,
         );
 
         $this->channelFactory = new ChannelFactory(
