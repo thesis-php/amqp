@@ -22,4 +22,4 @@ services:
       - "127.0.0.1:5673:5672"
       - "127.0.0.1:15673:15672"
     volumes:
-      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./docker/rabbitmq_low_memory/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
