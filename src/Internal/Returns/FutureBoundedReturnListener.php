@@ -65,7 +65,7 @@ final class FutureBoundedReturnListener
 
         $message = new Message(
             body: $message->body,
-            headers: array_merge($message->headers, [self::TRACE_HEADER_KEY => $uniqueId]),
+            headers: [...$message->headers, self::TRACE_HEADER_KEY => $uniqueId],
             contentType: $message->contentType,
             contentEncoding: $message->contentEncoding,
             deliveryMode: $message->deliveryMode,
