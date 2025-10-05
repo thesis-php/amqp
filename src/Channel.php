@@ -86,6 +86,8 @@ final class Channel
         bool $mandatory = false,
         bool $immediate = false,
     ): ?PublishConfirmation {
+        $this->connection->ensureNotBlocked();
+
         /** @var ?PublishConfirmation $confirmation */
         $confirmation = null;
 
@@ -110,6 +112,8 @@ final class Channel
      */
     public function publishBatch(array $publishMessages): PublishBatchConfirmation
     {
+        $this->connection->ensureNotBlocked();
+
         /** @var list<PublishConfirmation> $confirmations */
         $confirmations = [];
 

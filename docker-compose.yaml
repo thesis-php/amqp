@@ -14,3 +14,12 @@ services:
     ports:
       - "127.0.0.1:5672:5672"
       - "127.0.0.1:15672:15672"
+
+  rabbitmq_low_memory:
+    image: rabbitmq:4.0-management-alpine
+    restart: always
+    ports:
+      - "127.0.0.1:5673:5672"
+      - "127.0.0.1:15673:15672"
+    volumes:
+      - ./docker/rabbitmq_low_memory/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf

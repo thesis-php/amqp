@@ -25,6 +25,8 @@ enum Protocol
             ClassMethod::CONNECTION_OPEN_OK => Frame\ConnectionOpenOk::class,
             ClassMethod::CONNECTION_CLOSE => Frame\ConnectionClose::class,
             ClassMethod::CONNECTION_CLOSE_OK => Frame\ConnectionCloseOk::class,
+            ClassMethod::CONNECTION_BLOCKED => Frame\ConnectionBlocked::class,
+            ClassMethod::CONNECTION_UNBLOCKED => Frame\ConnectionUnblocked::class,
         ],
         ClassType::CHANNEL => [
             ClassMethod::CHANNEL_OPEN_OK => Frame\ChannelOpenOkFrame::class,
