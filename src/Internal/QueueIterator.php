@@ -66,6 +66,11 @@ final readonly class QueueIterator implements Iterator
         $this->queue->error($e);
     }
 
+    public function abandon(\Throwable $e): void
+    {
+        $this->queue->error($e);
+    }
+
     public function continue(?Cancellation $cancellation = null): bool
     {
         return $this->iterator->continue($cancellation);

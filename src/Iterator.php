@@ -24,6 +24,8 @@ interface Iterator extends \IteratorAggregate
      */
     public function cancel(\Throwable $e, bool $noWait = false): void;
 
+    public function abandon(\Throwable $e): void;
+
     /**
      * @throws CancelledException
      */

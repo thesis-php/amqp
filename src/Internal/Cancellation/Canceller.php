@@ -19,10 +19,12 @@ final class Canceller
     /**
      * @param callable(bool): void $complete
      * @param callable(\Throwable, bool): void $cancel
+     * @param callable(\Throwable): void $abandon
      */
     public function __construct(
         private readonly mixed $complete,
         private readonly mixed $cancel,
+        private readonly mixed $abandon,
     ) {
         $this->deferred = new DeferredCancellation();
     }
@@ -40,6 +42,20 @@ final class Canceller
                 ($this->complete)($noWait);
             }
 
+            $this->deferred->cancel();
+        } finally {
+            $this->cancelled = true;
+        }
+    }
+
+    public function abandon(\Throwable $e): void
+    {
+        if ($this->cancelled) {
+            return;
+        }
+
+        try {
+            ($this->abandon)($e);
             $this->deferred->cancel();
         } finally {
             $this->cancelled = true;

@@ -284,6 +284,14 @@ final class Channel
         /** @var Internal\QueueIterator<DeliveryMessage> $iterator */
         $iterator = Internal\QueueIterator::buffered($consumerTag, $this, $size);
 
+        $canceller = new Canceller(
+            $iterator->complete(...),
+            $iterator->cancel(...),
+            $iterator->abandon(...),
+        );
+
+        $this->cancellations->add($consumerTag, $canceller);
+
         $this->consume(
             callback: $iterator->push(...),
             queue: $queue,
@@ -339,6 +347,7 @@ final class Channel
         $canceller = new Canceller(
             $iterator->complete(...),
             $iterator->cancel(...),
+            $iterator->abandon(...),
         );
 
         $this->cancellations->add($consumerTag, $canceller);
@@ -782,7 +791,7 @@ final class Channel
     {
         $this->hooks->reject($this->channelId, $e);
         $this->hooks->unsubscribe($this->channelId);
-        $this->cancellations->cancelAll(error: $e);
+        $this->cancellations->abandon($e);
         $this->supervisor->stop();
         $this->closed = new Sync\Once(static fn(): bool => true);
     }
