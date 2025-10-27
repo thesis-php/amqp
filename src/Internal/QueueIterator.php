@@ -56,14 +56,25 @@ final readonly class QueueIterator implements Iterator
 
     public function complete(bool $noWait = false): void
     {
-        $this->channel->cancel($this->consumerTag, $noWait);
-        $this->queue->complete();
+        if (!$this->queue->isComplete()) {
+            $this->queue->complete();
+            $this->channel->cancel($this->consumerTag, $noWait);
+        }
     }
 
     public function cancel(\Throwable $e, bool $noWait = false): void
     {
-        $this->channel->cancel($this->consumerTag, $noWait);
-        $this->queue->error($e);
+        if (!$this->queue->isComplete()) {
+            $this->queue->error($e);
+            $this->channel->cancel($this->consumerTag, $noWait);
+        }
+    }
+
+    public function abandon(\Throwable $e): void
+    {
+        if (!$this->queue->isComplete()) {
+            $this->queue->error($e);
+        }
     }
 
     public function continue(?Cancellation $cancellation = null): bool

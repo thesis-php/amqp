@@ -84,7 +84,7 @@
         "fixcs": "tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --diff --verbose",
         "infection": "tools/infection/vendor/bin/infection --show-mutations",
         "normalize": "@composer bin composer-normalize normalize --diff ../../composer.json",
-        "phpstan": "tools/phpstan/vendor/bin/phpstan analyze",
+        "phpstan": "tools/phpstan/vendor/bin/phpstan analyze --memory-limit=512M",
         "pre-command-run": "mkdir -p var",
         "psalm": "tools/psalm/vendor/bin/psalm --show-info --no-diff --no-cache",
         "rector": "tools/rector/vendor/bin/rector process",

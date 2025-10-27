@@ -33,6 +33,17 @@ final class CancellationStorage
         }
     }
 
+    public function abandon(\Throwable $e): void
+    {
+        try {
+            foreach ($this->cancellers as $canceller) {
+                $canceller->abandon($e);
+            }
+        } finally {
+            $this->cancellers = [];
+        }
+    }
+
     public function cancelAll(bool $noWait = false, ?\Throwable $error = null): void
     {
         try {
