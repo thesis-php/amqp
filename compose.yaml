@@ -12,6 +12,3 @@ services:
   rabbitmq:
     image: rabbitmq:4.0-management-alpine
     restart: always
-    ports:
-      - "127.0.0.1:5672:5672"
-      - "127.0.0.1:15672:15672"
