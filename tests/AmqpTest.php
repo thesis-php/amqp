@@ -25,15 +25,11 @@ final class AmqpTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
         $this->client = new Client(Config::default());
     }
 
     protected function tearDown(): void
     {
-        parent::tearDown();
-
         $this->client->disconnect();
     }
 
