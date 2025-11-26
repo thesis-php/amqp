@@ -38,12 +38,16 @@ final class FutureBoundedReturnListener
         $futures = &$this->futures;
 
         $this->supervisor->addReturnListener(static function (DeliveryMessage $delivery) use (&$futures): void {
-            if (($correlationId = ($delivery->message->headers[self::TRACE_HEADER_KEY] ?? null)) !== null) {
-                try {
-                    ($futures[$correlationId] ?? null)?->error(new MessageCannotBeRouted());
-                } finally {
-                    unset($futures[$correlationId]);
-                }
+            $correlationId = $delivery->message->headers[self::TRACE_HEADER_KEY] ?? null;
+
+            if (!\is_string($correlationId) || !isset($futures[$correlationId])) {
+                return;
+            }
+
+            try {
+                $futures[$correlationId]->error(new MessageCannotBeRouted());
+            } finally {
+                unset($futures[$correlationId]);
             }
         });
 

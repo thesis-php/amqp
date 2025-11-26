@@ -18,7 +18,6 @@ final class AMQPlain extends Mechanism
         private readonly string $password,
     ) {}
 
-    /** @phpstan-ignore-next-line */
     public function name(): string
     {
         return self::AMQPLAIN;
