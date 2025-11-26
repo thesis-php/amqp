@@ -1,0 +1,17 @@
+services:
+  php:
+    image: ghcr.io/thesis-php/php:${PHP_VERSION:-8.3}
+    user: ${CONTAINER_USER:-}
+    environment:
+      HISTFILE: /app/var/.docker_history
+      COMPOSER_CACHE_DIR: /app/var/.composer_cache
+    tty: true
+    volumes:
+      - .:/app:cached
+
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine
+    restart: always
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
