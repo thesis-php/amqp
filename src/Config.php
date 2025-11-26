@@ -13,9 +13,9 @@ use Thesis\Amqp\Internal\Protocol\Auth\Mechanism;
  */
 final readonly class Config
 {
-    private const string DEFAULT_URL = 'localhost:5672';
     private const string DEFAULT_HOST = 'localhost';
     private const int DEFAULT_PORT = 5672;
+    private const string DEFAULT_URL = self::DEFAULT_HOST . ':' . self::DEFAULT_PORT;
     private const string DEFAULT_USERNAME = 'guest';
     private const string DEFAULT_PASSWORD = 'guest';
     private const string DEFAULT_VHOST = '/';
