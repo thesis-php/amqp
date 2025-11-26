@@ -31,7 +31,19 @@ install-lowest: ## Install Composer dependencies
 	@touch vendor/.lowest
 .PHONY: install-lowest
 
-run: ## Run a command inside the Docker container, e.g. `make run CMD=pwd`
+up: ## Docker compose up
+	$(DOCKER_COMPOSE) up --build --detach $(ARGS)
+.PHONY: up
+
+down: ## Docker compose down
+	$(DOCKER_COMPOSE) down --remove-orphans $(ARGS)
+.PHONY: down
+
+dc: ## Run docker compose command, e.g. `make dc CMD=start`
+	$(DOCKER_COMPOSE) $(CMD)
+.PHONY: start
+
+run: ## Run a command inside the `php` Docker container, e.g. `make run CMD='php --version'`
 	$(RUN) $(CMD)
 .PHONY: run
 
@@ -65,11 +77,11 @@ phpstan: var vendor ## Analyze code using PHPStan
 	$(RUN) phpstan analyze --memory-limit=1G $(ARGS)
 .PHONY: phpstan
 
-test: var vendor ## Run tests using PHPUnit
+test: var vendor up ## Run tests using PHPUnit
 	$(RUN) vendor/bin/phpunit $(ARGS)
 .PHONY: test
 
-infect: var vendor ## Run mutation tests using Infection
+infect: var vendor up ## Run mutation tests using Infection
 	$(RUN) infection --show-mutations $(ARGS)
 .PHONY: infect
 
