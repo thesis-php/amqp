@@ -25,15 +25,11 @@ final class AmqpTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
-        $this->client = new Client(Config::default());
+        $this->client = new Client(new Config(urls: ['rabbitmq:5672']));
     }
 
     protected function tearDown(): void
     {
-        parent::tearDown();
-
         $this->client->disconnect();
     }
 
@@ -188,7 +184,7 @@ final class AmqpTest extends TestCase
     #[TestWith([20])]
     public function testChannelsExhausted(int $channelMax): void
     {
-        $client = new Client(new Config(channelMax: $channelMax));
+        $client = new Client(new Config(urls: ['rabbitmq:5672'], channelMax: $channelMax));
 
         for ($i = 0; $i < $channelMax; ++$i) {
             $client->channel();

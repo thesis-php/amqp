@@ -1,13 +1,42 @@
 on:
   workflow_dispatch: ~
   push:
-    branches: ['main', '*.*.x']
+    branches: [main, '*.*.x']
   pull_request: ~
 
 jobs:
-  check:
-    uses: thesis-php/.github/.github/workflows/check.yml@main
-    with:
-      test: false
-      rector: true
-    secrets: inherit
+  code-style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: make fixer-check rector-check
+
+  composer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: make composer-validate composer-normalize-check deps-analyze
+
+  phpstan:
+    runs-on: ubuntu-latest
+    strategy: &strategy
+      fail-fast: false
+      matrix:
+        php: [ 8.3, 8.4, 8.5 ]
+        deps: [ lowest, highest ]
+    steps:
+      - uses: actions/checkout@v6
+      - run: PHP_VERSION=${{ matrix.php }} make install-${{ matrix.deps }} phpstan
+
+  test:
+    runs-on: ubuntu-latest
+    strategy: *strategy
+    steps:
+      - uses: actions/checkout@v6
+      - run: PHP_VERSION=${{ matrix.php }} make install-${{ matrix.deps }} test
+
+  # infect:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v6
+  #     - run: make infect
