@@ -130,14 +130,12 @@ final readonly class Config
         }
 
         $channelMax = self::MAX_CHANNEL;
-        if (isset($query['channel_max']) && is_numeric($query['channel_max']) && (int) $query['channel_max'] > 0) {
-            /** @var int<0, 65535> $channelMax */
+        if (isset($query['channel_max']) && is_numeric($query['channel_max']) && (int) $query['channel_max'] >= 0) {
             $channelMax = min($channelMax, (int) $query['channel_max']);
         }
 
         $frameMax = self::MAX_FRAME;
-        if (isset($query['frame_max']) && is_numeric($query['frame_max']) && (int) $query['frame_max'] > 0) {
-            /** @var int<0, 65535> $frameMax */
+        if (isset($query['frame_max']) && is_numeric($query['frame_max']) && (int) $query['frame_max'] >= 0) {
             $frameMax = min($frameMax, (int) $query['frame_max']);
         }
 
@@ -164,12 +162,16 @@ final readonly class Config
         $urls = [];
         foreach (explode(',', $components['host'] ?? '') as $host) {
             $hostport = explode(':', $host);
-            $urls[] = \sprintf('%s:%d', $hostport[0] ?: self::DEFAULT_HOST, (int) ($hostport[1] ?? $port));
+            $urls[] = \sprintf('%s:%d', $hostport[0], (int) ($hostport[1] ?? $port));
         }
 
         $vhost = self::DEFAULT_VHOST;
         if (isset($components['path'])) {
-            $vhost = ltrim($components['path'], '/') ?: self::DEFAULT_VHOST;
+            $vhost = ltrim($components['path'], '/');
+
+            if ($vhost === '') {
+                $vhost = self::DEFAULT_VHOST;
+            }
         }
 
         $user = self::DEFAULT_USERNAME;
@@ -183,7 +185,7 @@ final readonly class Config
         }
 
         return new self(
-            scheme: Scheme::tryFrom($components['scheme'] ?? Scheme::amqp->value) ?: throw UriIsInvalid::invalidScheme($components['scheme'] ?? ''),
+            scheme: Scheme::tryFrom($components['scheme'] ?? Scheme::amqp->value) ?? throw UriIsInvalid::invalidScheme($components['scheme'] ?? ''),
             urls: $urls,
             user: $user,
             password: $password,

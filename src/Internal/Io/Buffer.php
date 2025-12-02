@@ -228,7 +228,7 @@ final class Buffer implements
         $scale = $this->readUint8();
         $value = $this->readUint32();
 
-        return (int) ($value * (10 ** $scale));
+        return (int) ($value * (10 ** $scale)); // @phpstan-ignore cast.useless
     }
 
     public function readText(): string

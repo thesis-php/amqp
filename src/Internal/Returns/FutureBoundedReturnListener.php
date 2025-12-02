@@ -30,7 +30,7 @@ final class FutureBoundedReturnListener
         private readonly DeliverySupervisor $supervisor,
         ?\Closure $mandatoryIdGenerator = null,
     ) {
-        $this->mandatoryIdGenerator = $mandatoryIdGenerator ?: static fn(): string => bin2hex(random_bytes(10));
+        $this->mandatoryIdGenerator = $mandatoryIdGenerator ?? static fn(): string => bin2hex(random_bytes(10));
     }
 
     public function listen(): void

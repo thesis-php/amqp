@@ -124,8 +124,8 @@ final class ConfigTest extends TestCase
     public function testZeroQueryParameters(): void
     {
         $config = Config::fromURI('amqps://foo.bar/test?channel_max=0&frame_max=0&heartbeat=0&connection_timeout=0');
-        self::assertSame(0xFFFF, $config->channelMax);
-        self::assertSame(0xFFFF, $config->frameMax);
+        self::assertSame(0, $config->channelMax);
+        self::assertSame(0, $config->frameMax);
         self::assertSame(0, $config->heartbeat);
         self::assertEquals(10, $config->connectionTimeout);
     }

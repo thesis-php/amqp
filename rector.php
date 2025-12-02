@@ -2,11 +2,7 @@
 
 declare(strict_types=1);
 
-use Rector\Config\RectorConfig;
-use Rector\Php80\Rector\Class_\StringableForToStringRector;
-use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
-
-return RectorConfig::configure()
+return Rector\Config\RectorConfig::configure()
     ->withPaths([
         __DIR__ . '/examples',
         __DIR__ . '/src',
@@ -16,6 +12,5 @@ return RectorConfig::configure()
     ->withCache(__DIR__ . '/var/rector')
     ->withPhpSets()
     ->withSkip([
-        StringableForToStringRector::class,
-        AddOverrideAttributeToOverriddenMethodsRector::class,
+        Rector\Php80\Rector\Class_\StringableForToStringRector::class,
     ]);

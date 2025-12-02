@@ -1,13 +1,16 @@
 services:
   php:
-    image: ghcr.io/thesis-php/php:${PHP_VERSION:-8.3}
+    # noinspection ComposeUnknownValues
+    image: ghcr.io/phpyh/php:${PHP_IMAGE_VERSION:?Make sure `PHP_IMAGE_VERSION` is declared in `.env`}
     user: ${CONTAINER_USER:-}
     environment:
-      HISTFILE: /app/var/.docker_history
-      COMPOSER_CACHE_DIR: /app/var/.composer_cache
+      INSIDE_DEVCONTAINER: true
+      HISTFILE: /workspace/var/.docker_history
+      COMPOSER_CACHE_DIR: /workspace/var/.composer_cache
     tty: true
     volumes:
-      - .:/app:cached
+      - .:/workspace:cached
+    working_dir: /workspace
 
   rabbitmq:
     image: rabbitmq:4.0-management-alpine

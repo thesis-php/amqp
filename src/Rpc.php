@@ -18,8 +18,8 @@ final class Rpc
     /** @var ?Sync\Once<Channel> */
     private ?Sync\Once $channel = null;
 
-    /** @var non-empty-string */
-    private string $replyTo;
+    /** @var ?non-empty-string */
+    private ?string $replyTo = null;
 
     /** @var array<non-empty-string, DeferredFuture<Message>> */
     private array $futures = [];
@@ -101,7 +101,12 @@ final class Rpc
 
     private function channel(?Cancellation $cancellation = null): Channel
     {
-        return ($this->channel ??= new Sync\Once(weakClosure($this->setup(...)), static fn(Channel $channel): bool => !$channel->isClosed()))->await($cancellation);
+        $this->channel ??= new Sync\Once(
+            weakClosure($this->setup(...)),
+            static fn(Channel $channel): bool => !$channel->isClosed(),
+        );
+
+        return $this->channel->await($cancellation);
     }
 
     private function setup(): Channel
