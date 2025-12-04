@@ -16,7 +16,6 @@ use Thesis\Amqp\Exception\NoAvailableChannel;
 use Thesis\Time\TimeSpan;
 use function Amp\async;
 use function Amp\delay;
-use function PHPUnit\Framework\assertEquals;
 
 #[CoversClass(Client::class)]
 #[CoversClass(Channel::class)]
@@ -636,7 +635,7 @@ final class AmqpTest extends TestCase
         $channel->cancel($consumerTag);
         $channel->close();
 
-        assertEquals(['order#2', 'order#1'], $consumed);
+        self::assertEquals(['order#2', 'order#1'], $consumed);
     }
 
     public function testPublishConsumeBatch(): void
