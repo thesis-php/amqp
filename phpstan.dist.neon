@@ -1,12 +1,27 @@
+includes:
+    - /composer/vendor/phpstan/phpstan-strict-rules/rules.neon
+    - /composer/vendor/phpstan/phpstan-phpunit/extension.neon
+    - /composer/vendor/phpstan/phpstan-phpunit/rules.neon
+
 parameters:
     level: max
     paths:
+        - examples
         - src
         - tests
-        - examples
-    checkBenevolentUnionTypes: true
+    tmpDir: var/phpstan
     editorUrl: ''
-    editorUrlTitle: '%%file%%:%%line%%'
-    tmpDir: ./var/phpstan
+    editorUrlTitle: '%%relFile%%:%%line%%'
     stubFiles:
         - stubs/amphp.phpstub
+
+    # strict rules
+    checkBenevolentUnionTypes: true
+    checkMissingCallableSignature: true
+    # checkMissingOverrideMethodAttribute: true
+    checkUninitializedProperties: true
+    # rememberPossiblyImpureFunctionValues: false
+    reportAlwaysTrueInLastCondition: true
+    reportAnyTypeWideningInVarTag: true
+    reportPossiblyNonexistentConstantArrayOffset: true
+    # reportPossiblyNonexistentGeneralArrayOffset: true

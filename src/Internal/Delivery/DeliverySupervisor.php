@@ -190,7 +190,7 @@ final class DeliverySupervisor
             ack: $this->return !== null ? $noAction : $channel->ack(...),
             nack: $this->return !== null ? $noAction : $channel->nack(...),
             reject: $this->return !== null ? $noAction : $channel->reject(...),
-            reply: $this->replier($this->header->properties, $channel) ?: $noAction,
+            reply: $this->replier($this->header->properties, $channel) ?? $noAction,
             message: new Message(
                 body: $this->message,
                 headers: $this->header->properties->headers,

@@ -1,13 +1,10 @@
-include .env
--include .env.local
-
 SHELL ?= /bin/bash
-DOCKER ?= docker
-DOCKER_COMPOSE ?= $(DOCKER) compose
-export CONTAINER_USER ?= $(shell id -u):$(shell id -g)
-INSIDE_CONTAINER ?= $(shell test -f /.dockerenv && echo 1)
 
-RUN ?= $(if $(INSIDE_CONTAINER),,$(DOCKER_COMPOSE) run --rm php)
+DOCKER ?= docker
+DOCKER_COMPOSE ?= $(DOCKER) compose $(shell test -f .env.local && echo '--env-file .env --env-file .env.local')
+export CONTAINER_USER ?= $(shell id -u):$(shell id -g)
+
+RUN ?= $(if $(INSIDE_DEVCONTAINER),,$(DOCKER_COMPOSE) run --rm php)
 COMPOSER ?= $(RUN) composer
 
 ##
@@ -17,31 +14,39 @@ COMPOSER ?= $(RUN) composer
 var:
 	mkdir var
 
-vendor: composer.json
-	if [ -f vendor/.lowest ]; then $(MAKE) install-lowest; else $(MAKE) install-highest; fi
+vendor: composer.json $(wildcard composer.lock)
+	@if [ -f vendor/.lowest ]; then $(MAKE) install-lowest; else $(MAKE) install-highest; fi
 
 i: install-highest
 install-highest: ## Install highest Composer dependencies
-	$(COMPOSER) update $(ARGS)
+	$(COMPOSER) install
 	@rm -f vendor/.lowest
+	@touch vendor
 .PHONY: i install-highest
 
 install-lowest: ## Install lowest Composer dependencies
-	$(COMPOSER) update --prefer-lowest --prefer-stable $(ARGS)
+	$(COMPOSER) update --prefer-lowest --prefer-stable
 	@touch vendor/.lowest
+	@touch vendor
 .PHONY: install-lowest
 
 up: ## Docker compose up
-	$(DOCKER_COMPOSE) up --build --detach $(ARGS)
+	$(DOCKER_COMPOSE) up --remove-orphans --build --detach $(ARGS)
 .PHONY: up
 
 down: ## Docker compose down
 	$(DOCKER_COMPOSE) down --remove-orphans $(ARGS)
 .PHONY: down
 
-compose: ## Run docker compose command: `make compose CMD=start`
+dc: docker-compose
+docker-compose: ## Run docker compose command: `make dc CMD=start`
 	$(DOCKER_COMPOSE) $(CMD)
-.PHONY: compose
+.PHONY: dc docker-compose
+
+c: composer
+composer: ## Run Composer command: `make c CMD=start`
+	$(COMPOSER) $(CMD)
+.PHONY: c composer
 
 run: ## Run a command using the php container: `make run CMD='php --version'`
 	$(RUN) $(CMD)
@@ -52,6 +57,19 @@ terminal: var ## Start a terminal inside the php container
 	@$(if $(INSIDE_CONTAINER),echo 'Already inside docker container.'; exit 1,)
 	$(DOCKER_COMPOSE) run --rm $(ARGS) php bash
 .PHONY: t terminal
+
+rescaffold:
+	$(DOCKER) run \
+	  --volume .:/project \
+	  --user $(CONTAINER_USER) \
+	  --interactive --tty --rm \
+	  --pull always \
+	  ghcr.io/phpyh/scaffolder:latest \
+	  --user-name-default "$(shell git config user.name 2>/dev/null || whoami 2>/dev/null)" \
+	  --user-email-default "$(shell git config user.email 2>/dev/null)" \
+	  --package-project-default "$(shell basename $$(pwd))"
+	git add --all 2>/dev/null || true
+.PHONY: rescaffold
 
 ##
 ## Tools
@@ -94,7 +112,7 @@ composer-validate: ## Validate composer.json
 .PHONY: composer-validate
 
 composer-normalize: ## Normalize composer.json
-	$(COMPOSER) normalize --diff $(ARGS)
+	$(COMPOSER) normalize --no-check-lock --no-update-lock --diff $(ARGS)
 .PHONY: composer-normalize
 
 composer-normalize-check: ## Check that composer.json is normalized
@@ -104,7 +122,7 @@ composer-normalize-check: ## Check that composer.json is normalized
 fix: fixer rector composer-normalize ## Run all fixing recipes
 .PHONY: fix
 
-check: fixer-check rector-check composer-validate composer-normalize-check phpstan test deps-analyze  ## Run all project checks
+check: fixer-check rector-check composer-validate composer-normalize-check deps-analyze phpstan test  ## Run all project checks
 .PHONY: check
 
 # -----------------------

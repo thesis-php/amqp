@@ -13,17 +13,15 @@ final class ConsumerTagGenerator
     private const string PACKAGE_NAME = 'thesis/amqp';
 
     /** @var non-empty-string */
-    private readonly string $commandName;
+    private readonly string $infix;
 
     /** @var non-negative-int */
     private int $consumerId = 0;
 
     public function __construct()
     {
-        /** @var array{0?: string} $cli */
-        $cli = $_SERVER['argv'] ?? [0 => self::PACKAGE_NAME];
-
-        $this->commandName = ($cli[0] ?? self::PACKAGE_NAME) ?: self::PACKAGE_NAME;
+        $command = $_SERVER['argv'][0] ?? null; // @phpstan-ignore offsetAccess.nonOffsetAccessible
+        $this->infix = \is_string($command) && $command !== '' ? $command : self::PACKAGE_NAME;
     }
 
     /**
@@ -32,7 +30,7 @@ final class ConsumerTagGenerator
     public function next(): string
     {
         $prefix = 'ctag-';
-        $infix = $this->commandName;
+        $infix = $this->infix;
         $suffix = \sprintf('-%d', ++$this->consumerId);
 
         if (\strlen($prefix) + \strlen($infix) + \strlen($suffix) > self::TAG_LENGTH_MAX) {

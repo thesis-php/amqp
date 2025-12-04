@@ -11,10 +11,7 @@ use Composer\InstalledVersions;
  */
 final class VersionProvider
 {
-    /** @var non-empty-string */
     private const string DEFAULT_VERSION = 'dev';
-
-    /** @var non-empty-string */
     private const string PACKAGE_NAME = 'thesis/amqp';
 
     /** @var ?non-empty-string */
@@ -25,13 +22,24 @@ final class VersionProvider
      */
     public static function provide(): string
     {
-        return self::$version ??= (static function (): string {
-            $version = self::DEFAULT_VERSION;
-            if (InstalledVersions::isInstalled(self::PACKAGE_NAME) && ($prettyVersion = InstalledVersions::getPrettyVersion(self::PACKAGE_NAME)) !== null) {
-                $version = $prettyVersion ?: self::DEFAULT_VERSION;
-            }
-
-            return $version;
-        })();
+        return self::$version ??= self::doProvide();
     }
+
+    /** @return non-empty-string */
+    private static function doProvide(): string
+    {
+        if (!InstalledVersions::isInstalled(self::PACKAGE_NAME)) {
+            return self::DEFAULT_VERSION;
+        }
+
+        $prettyVersion = InstalledVersions::getPrettyVersion(self::PACKAGE_NAME);
+
+        if ($prettyVersion !== null && $prettyVersion !== '') {
+            return $prettyVersion;
+        }
+
+        return self::DEFAULT_VERSION;
+    }
+
+    private function __construct() {}
 }

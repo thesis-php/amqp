@@ -74,7 +74,7 @@ final class PublishConfirmation
 
         try {
             return $this->result = Future\awaitFirst($futures, $cancellation);
-        } catch (MessageCannotBeRouted) { // @phpstan-ignore-line
+        } catch (MessageCannotBeRouted) { // @phpstan-ignore catch.neverThrown
             return $this->result = PublishResult::Unrouted;
         } finally {
             /** @phpstan-ignore argument.type */

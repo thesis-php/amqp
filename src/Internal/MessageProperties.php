@@ -268,7 +268,7 @@ final readonly class MessageProperties
         $contentType = self::hasSet($mask, self::FLAG_CONTENT_TYPE) ? $reader->readString() : null;
         $contentEncoding = self::hasSet($mask, self::FLAG_CONTENT_ENCODING) ? $reader->readString() : null;
         $headers = self::hasSet($mask, self::FLAG_HEADERS) ? $reader->readTable() : [];
-        $deliveryMode = self::hasSet($mask, self::FLAG_DELIVERY_MODE) ? (DeliveryMode::tryFrom($reader->readUint8()) ?: DeliveryMode::Whatever) : DeliveryMode::Whatever;
+        $deliveryMode = self::hasSet($mask, self::FLAG_DELIVERY_MODE) ? (DeliveryMode::tryFrom($reader->readUint8()) ?? DeliveryMode::Whatever) : DeliveryMode::Whatever;
         /** @var ?int<0, 9> $priority */
         $priority = self::hasSet($mask, self::FLAG_PRIORITY) ? $reader->readUint8() : null;
         /** @var non-empty-string $correlationId */

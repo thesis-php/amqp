@@ -7,7 +7,7 @@
     "logs": {
         "text": "var/infection.log",
         "stryker": {
-            "report": "/^\\d+\\.\\d+\\.x$/"
+            "report": "/^(?>main|\\d+\\.\\d+\\.x)$/D"
         },
     },
     "tmpDir": "var",

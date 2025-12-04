@@ -16,13 +16,13 @@ final class ClientTest extends TestCase
     #[DoesNotPerformAssertions]
     public function testDisconnectDoesNotThrowIfClientIsNotConnected(): void
     {
-        $client = $this->createClient();
+        $client = self::createClient();
         $client->disconnect();
     }
 
     public function testConnectDisconnectExplicit(): void
     {
-        $client = $this->createClient();
+        $client = self::createClient();
         $channel = $client->channel();
         $client->disconnect();
 
@@ -36,7 +36,7 @@ final class ClientTest extends TestCase
 
         try {
             gc_disable();
-            $client = $this->createClient();
+            $client = self::createClient();
             $channel = $client->channel();
             $weakClient = \WeakReference::create($client);
             $weakChannel = \WeakReference::create($channel);
@@ -58,7 +58,7 @@ final class ClientTest extends TestCase
 
         try {
             gc_disable();
-            $client = $this->createClient();
+            $client = self::createClient();
             $channel = $client->channel();
             $weakChannel = \WeakReference::create($channel);
             $channel->close();
@@ -76,7 +76,7 @@ final class ClientTest extends TestCase
     #[RequiresPhp('8.4')]
     public function testConnectDisconnectOnDestructor(): void
     {
-        $client = $this->createClient();
+        $client = self::createClient();
         $channel = $client->channel();
 
         unset($client);
