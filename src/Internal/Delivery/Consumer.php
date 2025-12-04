@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Delivery;
 
+use Revolt\EventLoop;
 use Thesis\Amqp\Channel;
 use Thesis\Amqp\DeliveryMessage;
 
@@ -23,7 +24,7 @@ final class Consumer
         $supervisor->addConsumeListener(static function (DeliveryMessage $delivery, Channel $channel) use (&$consumers): void {
             $consumer = $consumers[$delivery->consumerTag] ?? null;
             if ($consumer !== null) {
-                $consumer($delivery, $channel);
+                EventLoop::queue(static fn() => $consumer($delivery, $channel));
             }
         });
 
