@@ -14,7 +14,7 @@ use Thesis\Amqp\DeliveryMessage;
  */
 final class Consumer
 {
-    /** @var array<non-empty-string, Listener> */
+    /** @var array<non-empty-string|int, Listener> */
     private array $consumers = [];
 
     public function __construct(DeliverySupervisor $supervisor)
@@ -56,7 +56,7 @@ final class Consumer
     public function cancelAll(callable $cancel): void
     {
         foreach (array_keys($this->consumers) as $consumerTag) {
-            $cancel($consumerTag);
+            $cancel((string) $consumerTag);
         }
     }
 }
