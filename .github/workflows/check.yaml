@@ -32,14 +32,14 @@ jobs:
         deps: [ lowest, highest ]
     steps:
       - uses: actions/checkout@v6
-      - run: PHP_IMAGE_VERSION=${{ matrix.php }} make install-${{ matrix.deps }} phpstan
+      - run: PHP_IMAGE_VERSION=${{ matrix.php }} make ${{ matrix.deps == 'lowest' && 'install-lowest' || '' }} phpstan
 
   test:
     runs-on: ubuntu-latest
     strategy: *strategy
     steps:
       - uses: actions/checkout@v6
-      - run: PHP_IMAGE_VERSION=${{ matrix.php }} make install-${{ matrix.deps }} test
+      - run: PHP_IMAGE_VERSION=${{ matrix.php }} make ${{ matrix.deps == 'lowest' && 'install-lowest' || '' }} test
 
   # infect:
   #   runs-on: ubuntu-latest
