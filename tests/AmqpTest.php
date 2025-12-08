@@ -581,7 +581,7 @@ final class AmqpTest extends TestCase
         $channel->consume(static function (DeliveryMessage $delivery) use (&$consumedMessages, $messageCount, $deferred): void {
             $consumedMessages[$delivery->exchange][] = $delivery->message->body;
             $delivery->ack();
-            if (\count($consumedMessages[$delivery->exchange]) === $messageCount) {
+            if (\count($consumedMessages[$delivery->exchange]) === $messageCount && !$deferred->isComplete()) {
                 $deferred->complete($consumedMessages);
             }
         }, $queue);
@@ -590,6 +590,52 @@ final class AmqpTest extends TestCase
         self::assertSame(0, $channel->queuePurge($queue));
 
         $channel->close();
+    }
+
+    /**
+     * @param non-empty-string $exchange
+     * @param non-empty-string $queue
+     * @param non-empty-string $routingKey
+     */
+    #[TestWith(['events', 'events.orders', 'orders'])]
+    public function testConcurrentConsume(string $exchange, string $queue, string $routingKey): void
+    {
+        $channel = $this->client->channel();
+        $channel->qos(prefetchCount: 2);
+
+        $channel->queueUnbind($queue, $exchange, $routingKey);
+        $channel->exchangeDelete($exchange);
+        $channel->queueDelete($queue);
+
+        $channel->queueDeclare($queue, autoDelete: true);
+        $channel->exchangeDeclare($exchange, autoDelete: true);
+        $channel->queueBind($queue, $exchange, $routingKey);
+
+        $channel->publish(new Message('order#1'), $exchange, $routingKey);
+        $channel->publish(new Message('order#2'), $exchange, $routingKey);
+
+        $consumed = [];
+        $deferred = new DeferredFuture();
+
+        $consumerTag = $channel->consume(static function (DeliveryMessage $delivery) use (&$consumed, $deferred): void {
+            if ($delivery->message->body === 'order#1') {
+                $deferred->getFuture()->await();
+            }
+
+            if ($delivery->message->body === 'order#2') {
+                $deferred->complete();
+            }
+
+            $consumed[] = $delivery->message->body;
+            $delivery->ack();
+        }, $queue);
+
+        $deferred->getFuture()->await();
+
+        $channel->cancel($consumerTag);
+        $channel->close();
+
+        self::assertEquals(['order#2', 'order#1'], $consumed);
     }
 
     public function testPublishConsumeBatch(): void
