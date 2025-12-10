@@ -102,7 +102,7 @@ final class ChannelFactory
      */
     private function allocateChannelId(): int
     {
-        for ($id = $this->channelId; $id <= $this->properties->maxChannel(); ++$id) {
+        for ($id = $this->channelId; $id <= $this->properties->channelMax; ++$id) {
             if (!isset($this->channels[$id])) {
                 $this->channelId = $id + 1;
 
@@ -118,6 +118,6 @@ final class ChannelFactory
             }
         }
 
-        throw Exception\NoAvailableChannel::forMaxChannel($this->properties->maxChannel());
+        throw Exception\NoAvailableChannel::forMaxChannel($this->properties->channelMax);
     }
 }

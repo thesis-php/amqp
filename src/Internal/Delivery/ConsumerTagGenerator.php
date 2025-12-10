@@ -10,7 +10,7 @@ namespace Thesis\Amqp\Internal\Delivery;
 final class ConsumerTagGenerator
 {
     private const int TAG_LENGTH_MAX = 0xFF;
-    private const string PACKAGE_NAME = 'thesis/amqp';
+    private const string DEFAULT_INFIX = 'thesis/amqp';
 
     /** @var non-empty-string */
     private readonly string $infix;
@@ -21,7 +21,7 @@ final class ConsumerTagGenerator
     public function __construct()
     {
         $command = $_SERVER['argv'][0] ?? null; // @phpstan-ignore offsetAccess.nonOffsetAccessible
-        $this->infix = \is_string($command) && $command !== '' ? $command : self::PACKAGE_NAME;
+        $this->infix = \is_string($command) && $command !== '' ? $command : self::DEFAULT_INFIX;
     }
 
     /**
@@ -34,7 +34,7 @@ final class ConsumerTagGenerator
         $suffix = \sprintf('-%d', ++$this->consumerId);
 
         if (\strlen($prefix) + \strlen($infix) + \strlen($suffix) > self::TAG_LENGTH_MAX) {
-            $infix = self::PACKAGE_NAME;
+            $infix = self::DEFAULT_INFIX;
         }
 
         return "{$prefix}{$infix}{$suffix}";

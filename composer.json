@@ -32,6 +32,7 @@
         "thesis/byte-reader-writer": "^0.1.0",
         "thesis/byte-writer": "^0.2.1",
         "thesis/endian": "^0.1.0",
+        "thesis/package-version": "^0.1.2",
         "thesis/sync-once": "^0.1.1",
         "thesis/time-span": "^0.2.0"
     },
