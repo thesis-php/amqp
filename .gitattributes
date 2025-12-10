@@ -6,6 +6,7 @@
 
 * export-ignore
 /src/ -export-ignore
+/src/** -export-ignore
 /CHANGELOG.md -export-ignore
 /composer.json -export-ignore
 /LICENSE -export-ignore
