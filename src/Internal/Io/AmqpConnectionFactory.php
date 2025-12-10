@@ -14,12 +14,22 @@ use Thesis\Amqp\Internal\Protocol;
 use Thesis\Amqp\Internal\Protocol\Auth;
 use Thesis\Amqp\Internal\Protocol\Frame;
 use Thesis\Amqp\Scheme;
+use function Thesis\Package\version;
 
 /**
  * @internal
  */
 final readonly class AmqpConnectionFactory
 {
+    private const string PRODUCT = 'AMQP 0.9.1 Client';
+    private const string PLATFORM = 'php';
+    private const string PACKAGE = 'thesis/amqp';
+    private const array CAPABILITIES = [
+        'connection.blocked' => true,
+        'basic.nack' => true,
+        'publisher_confirms' => true,
+    ];
+
     public function __construct(
         private Config $config,
         private Properties $properties,
@@ -33,24 +43,29 @@ final readonly class AmqpConnectionFactory
         $start = $connection->rpc(Frame\ProtocolHeader::frame, Frame\ConnectionStart::class);
 
         $tune = $connection->rpc(
-            Protocol\Method::connectionStartOk($this->properties->toArray(), Auth\Mechanism::select(
-                $this->config->sasl,
-                $start->mechanisms,
-            )),
+            Protocol\Method::connectionStartOk(
+                clientProperties: [
+                    'product' => self::PRODUCT,
+                    'version' => version(self::PACKAGE),
+                    'platform' => self::PLATFORM,
+                    'capabilities' => self::CAPABILITIES,
+                ],
+                auth: Auth\Mechanism::select($this->config->sasl, $start->mechanisms),
+            ),
             Frame\ConnectionTune::class,
         );
 
-        [$heartbeat, $channelMax, $frameMax] = [
-            $this->config->heartbeat($tune->heartbeat),
-            $this->config->channelMax($tune->channelMax),
-            $this->config->frameMax($tune->frameMax),
-        ];
+        $heartbeat = $this->config->heartbeat($tune->heartbeat);
+        $this->properties->channelMax = $this->config->channelMax($tune->channelMax);
+        $this->properties->frameMax = $this->config->frameMax($tune->frameMax);
 
         $connection->rpc(
-            Protocol\Method::connectionTuneOk($channelMax, $frameMax, $heartbeat),
+            Protocol\Method::connectionTuneOk(
+                channelMax: $this->properties->channelMax,
+                frameMax: $this->properties->frameMax,
+                heartbeat: $heartbeat,
+            ),
         );
-
-        $this->properties->tune($channelMax, $frameMax);
 
         if ($heartbeat > 0) {
             $connection->heartbeat($heartbeat);

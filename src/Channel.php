@@ -811,7 +811,7 @@ final class Channel
             properties: MessageProperties::fromMessage($message),
         );
 
-        foreach (Internal\chunks($message->body, $this->properties->maxFrame()) as $chunk) {
+        foreach (Internal\chunks($message->body, $this->properties->frameMax) as $chunk) {
             yield new Protocol\Body(
                 channelId: $this->channelId,
                 body: $chunk,

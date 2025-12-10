@@ -32,7 +32,7 @@ final class Client
     public function __construct(
         public readonly Config $config,
     ) {
-        $properties = Properties::createDefault();
+        $properties = new Properties();
         $this->hooks = new Hooks();
 
         $this->connectionFactory = new AmqpConnectionFactory(
