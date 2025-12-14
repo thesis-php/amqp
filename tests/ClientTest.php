@@ -85,6 +85,7 @@ final class ClientTest extends TestCase
         $channel->confirmSelect();
     }
 
+    #[DoesNotPerformAssertions]
     public function testNoCrashWhenDisconnectWithNumericConsumerTag(): void
     {
         $client = self::createClient();
@@ -100,8 +101,6 @@ final class ClientTest extends TestCase
         );
 
         $client->disconnect();
-
-        self::expectNotToPerformAssertions();
     }
 
     private static function createClient(): Client
