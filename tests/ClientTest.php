@@ -85,6 +85,24 @@ final class ClientTest extends TestCase
         $channel->confirmSelect();
     }
 
+    #[DoesNotPerformAssertions]
+    public function testNoCrashWhenDisconnectWithNumericConsumerTag(): void
+    {
+        $client = self::createClient();
+
+        $channel = $client->channel();
+        $channel->queueDelete('events');
+        $channel->queueDeclare('events', autoDelete: true);
+
+        $channel->consume(
+            callback: static function (): void {},
+            queue: 'events',
+            consumerTag: '1',
+        );
+
+        $client->disconnect();
+    }
+
     private static function createClient(): Client
     {
         return new Client(new Config(urls: ['rabbitmq:5672']));
