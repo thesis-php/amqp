@@ -73,7 +73,7 @@ final class ClientTest extends TestCase
         }
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testConnectDisconnectOnDestructor(): void
     {
         $client = self::createClient();
