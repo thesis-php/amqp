@@ -64,12 +64,11 @@ rescaffold:
 	$(DOCKER) run \
 	  --volume .:/project \
 	  --user $(CONTAINER_USER) \
-	  --interactive --tty --rm \
+	  --interactive --tty --rm --init \
 	  --pull always \
 	  ghcr.io/phpyh/scaffolder:latest \
 	  --user-name-default '$(shell git config user.name 2>/dev/null || whoami 2>/dev/null)' \
-	  --user-email-default '$(shell git config user.email 2>/dev/null)' \
-	  --package-project-default '$(shell basename $$(pwd))'
+	  --user-email-default '$(shell git config user.email 2>/dev/null)'
 	git add --all 2>/dev/null || true
 .PHONY: rescaffold
 

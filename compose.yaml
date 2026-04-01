@@ -8,6 +8,7 @@ services:
       HISTFILE: /workspace/var/.docker_history
       COMPOSER_CACHE_DIR: /workspace/var/.composer_cache
     tty: true
+    init: true
     volumes:
       - .:/workspace:cached
     working_dir: /workspace

@@ -5,6 +5,8 @@
 *.php diff=php
 
 * export-ignore
+/examples/ -export-ignore
+/examples/** -export-ignore
 /src/ -export-ignore
 /src/** -export-ignore
 /CHANGELOG.md -export-ignore
