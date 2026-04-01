@@ -37,8 +37,8 @@
         "thesis/time-span": "^0.2.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^12.4.4",
-        "symfony/var-dumper": "^7.3.5"
+        "phpunit/phpunit": "^12 || ^13",
+        "symfony/var-dumper": "^7 || ^8"
     },
     "conflict": {
         "amphp/dns": "<2.1.2",
