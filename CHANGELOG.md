@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] 2025-06-07
 
-## Changed
+### Changed
 
 - Refactor integration with `DeliverySupervisor`.
 - Replace `Amp\Future` with `Thesis\Sync` on `Delivery` methods.
@@ -20,13 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve documentation.
 - Clear all Channel and Client state on `close/disconnect`.
 
-## Added
+### Added
 
 - RPC implemented.
 
 ## [0.4.0] 2025-05-06
 
-## Changed
+### Changed
 
 - Improve title and description in README.
 - Reorder `Channel` properties.
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Apply Rector fixes.
 - Make `Client::$config` property public.
 
-## Added
+### Added
 
 - Experimental batch consume implemented.
 - Returns should be handled as callbacks and explicitly in confirmation mode enabled.
