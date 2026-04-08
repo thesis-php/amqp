@@ -301,9 +301,9 @@ final readonly class Config
     }
 
     /**
-     * @deprecated since 1.0.2, use {@see Config::$sasl} property
      * @return non-empty-list<Mechanism>
      */
+    #[\Deprecated(message: 'Use `Config::$sasl` property', since: '1.0.2')]
     public function sasl(): array
     {
         return $this->sasl;

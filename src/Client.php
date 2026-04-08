@@ -95,10 +95,7 @@ final class Client
 
     public function __destruct()
     {
-        if (\PHP_VERSION_ID >= 80400) {
-            $this->disconnect();
-        }
-
+        $this->disconnect();
         $this->hooks->complete();
     }
 }

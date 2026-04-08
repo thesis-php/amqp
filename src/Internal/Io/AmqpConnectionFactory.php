@@ -124,7 +124,7 @@ final readonly class AmqpConnectionFactory
      */
     private function createSocket(string $url): Socket\Socket
     {
-        $context = (new Socket\ConnectContext())
+        $context = new Socket\ConnectContext()
             ->withConnectTimeout($this->config->connectionTimeout);
 
         if ($this->config->tcpNoDelay) {
