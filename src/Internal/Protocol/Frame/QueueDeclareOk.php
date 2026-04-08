@@ -25,14 +25,14 @@ final readonly class QueueDeclareOk implements Frame
 
     public static function read(Io\ReadBytes $reader): self
     {
-        /** @var non-empty-string $queue */
         $queue = $reader->readString();
+        \assert($queue !== '');
 
-        /** @var non-negative-int $messages */
         $messages = $reader->readInt32();
+        \assert($messages >= 0);
 
-        /** @var non-negative-int $consumers */
         $consumers = $reader->readInt32();
+        \assert($consumers >= 0);
 
         return new self(
             $queue,

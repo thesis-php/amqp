@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Protocol\Frame;
 
+use BcMath\Number;
 use Thesis\Amqp\Internal\Io;
 use Thesis\Amqp\Internal\Protocol\Frame;
 
@@ -13,11 +14,10 @@ use Thesis\Amqp\Internal\Protocol\Frame;
 final readonly class BasicGetOk implements Frame
 {
     /**
-     * @param non-negative-int $deliveryTag
      * @param non-negative-int $messageCount
      */
     public function __construct(
-        public int $deliveryTag,
+        public Number $deliveryTag,
         public bool $redelivered,
         public string $exchange,
         public string $routingKey,

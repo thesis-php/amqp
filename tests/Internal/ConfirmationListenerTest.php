@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal;
 
+use BcMath\Number;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -16,8 +17,8 @@ use Thesis\Amqp\PublishResult;
 #[CoversClass(ConfirmationListener::class)]
 final class ConfirmationListenerTest extends TestCase
 {
-    #[TestWith([PublishResult::Acked, new BasicAck(1, false)])]
-    #[TestWith([PublishResult::Nacked, new BasicNack(1, false, false)])]
+    #[TestWith([PublishResult::Acked, new BasicAck(new Number(1), false)])]
+    #[TestWith([PublishResult::Nacked, new BasicNack(new Number(1), false, false)])]
     public function testConfirmOne(PublishResult $result, BasicAck|BasicNack $frame): void
     {
         $hooks = new Hooks();
@@ -34,8 +35,8 @@ final class ConfirmationListenerTest extends TestCase
         self::assertSame($result, $confirmation1->result());
     }
 
-    #[TestWith([PublishResult::Acked, new BasicAck(2, true)])]
-    #[TestWith([PublishResult::Nacked, new BasicNack(2, true, false)])]
+    #[TestWith([PublishResult::Acked, new BasicAck(new Number(2), true)])]
+    #[TestWith([PublishResult::Nacked, new BasicNack(new Number(2), true, false)])]
     public function testConfirmMultiple(PublishResult $result, BasicAck|BasicNack $frame): void
     {
         $hooks = new Hooks();
@@ -80,8 +81,8 @@ final class ConfirmationListenerTest extends TestCase
         $confirmation1 = $listener->newConfirmation();
         $confirmation2 = $listener->newConfirmation();
 
-        $hooks->emit(new Request(1, new BasicAck(1, false)));
-        $hooks->emit(new Request(1, new BasicAck(2, false)));
+        $hooks->emit(new Request(1, new BasicAck(new Number(1), false)));
+        $hooks->emit(new Request(1, new BasicAck(new Number(2), false)));
 
         $acks = PublishConfirmation::awaitAll([$confirmation1, $confirmation2]);
         self::assertSame([1 => PublishResult::Acked, 2 => PublishResult::Acked], iterator_to_array($acks));

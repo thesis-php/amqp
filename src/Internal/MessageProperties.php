@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal;
 
+use BcMath\Number;
 use Thesis\Amqp\DeliveryMode;
 use Thesis\Amqp\Message;
 use Thesis\Time\TimeSpan;
@@ -29,13 +30,12 @@ final readonly class MessageProperties
     private const int FLAG_RESERVED1 = 0x0004;
 
     /**
-     * @param non-negative-int $bodyLen
      * @param array<string, mixed> $headers
      * @param ?int<0, 9> $priority
      * @param ?non-empty-string $correlationId
      */
     private function __construct(
-        public int $bodyLen = 0,
+        public Number $bodyLen = new Number(0),
         public array $headers = [],
         public ?string $contentType = null,
         public ?string $contentEncoding = null,
@@ -54,7 +54,7 @@ final readonly class MessageProperties
     public static function fromMessage(Message $message): self
     {
         return new self(
-            bodyLen: \strlen($message->body),
+            bodyLen: new Number(\strlen($message->body)),
             headers: $message->headers,
             contentType: $message->contentType,
             contentEncoding: $message->contentEncoding,

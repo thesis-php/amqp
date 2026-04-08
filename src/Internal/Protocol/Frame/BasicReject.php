@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Protocol\Frame;
 
+use BcMath\Number;
 use Thesis\Amqp\Internal\Io;
 use Thesis\Amqp\Internal\Protocol\Frame;
 
@@ -12,11 +13,8 @@ use Thesis\Amqp\Internal\Protocol\Frame;
  */
 final readonly class BasicReject implements Frame
 {
-    /**
-     * @param non-negative-int $deliveryTag
-     */
     public function __construct(
-        public int $deliveryTag,
+        public Number $deliveryTag,
         public bool $requeue,
     ) {}
 

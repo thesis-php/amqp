@@ -4,38 +4,54 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Io;
 
+use BcMath\Number;
+use Thesis\Endian\Order;
+
 /**
  * @internal
+ *
+ * @phpstan-import-type Int8 from Order
+ * @phpstan-import-type Uint8 from Order
+ * @phpstan-import-type Int16 from Order
+ * @phpstan-import-type Uint16 from Order
+ * @phpstan-import-type Int32 from Order
+ * @phpstan-import-type Uint32 from Order
  */
 interface ReadBytes
 {
+    /**
+     * @return Int8
+     */
     public function readInt8(): int;
 
     /**
-     * @return non-negative-int
+     * @return Uint8
      */
     public function readUint8(): int;
 
+    /**
+     * @return Int16
+     */
     public function readInt16(): int;
 
     /**
-     * @return non-negative-int
+     * @return Uint16
      */
     public function readUint16(): int;
 
+    /**
+     * @return Int32
+     */
     public function readInt32(): int;
 
     /**
-     * @return non-negative-int
+     * @return Uint32
      */
     public function readUint32(): int;
 
-    public function readInt64(): int;
+    public function readInt64(): Number;
 
-    /**
-     * @return non-negative-int
-     */
-    public function readUint64(): int;
+    public function readUint64(): Number;
 
     public function readFloat(): float;
 

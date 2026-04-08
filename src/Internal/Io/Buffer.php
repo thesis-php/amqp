@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Thesis\Amqp\Internal\Io;
 
 use Amp\ByteStream\ClosedException;
+use BcMath\Number;
 use Thesis\Amqp\Exception\ConnectionIsClosed;
 use Thesis\Amqp\Exception\UnknownValueType;
 use Thesis\Amqp\Internal\Protocol\Type;
 use Thesis\ByteWriter\Writer;
-use Thesis\Endian\endian;
+use Thesis\Endian\Order;
 
 /**
  * @internal
@@ -20,49 +21,50 @@ final class Buffer implements
     WriterTo,
     \Countable
 {
-    public static function empty(endian $endian = endian::network): self
+    public static function empty(Order $order = Order::Network): self
     {
-        return new self(endian: $endian);
+        return new self($order);
     }
 
+    private string $buffer = '';
+
     private function __construct(
-        private string $buffer = '',
-        private readonly endian $endian = endian::network,
+        private readonly Order $order,
     ) {}
 
     public function writeUint8(int $v): self
     {
-        return $this->append($this->endian->packUint8($v));
+        return $this->append($this->order->packUint8($v));
     }
 
     public function writeInt16(int $v): self
     {
-        return $this->append($this->endian->packInt16($v));
+        return $this->append($this->order->packInt16($v));
     }
 
     public function writeUint16(int $v): self
     {
-        return $this->append($this->endian->packUint16($v));
+        return $this->append($this->order->packUint16($v));
     }
 
     public function writeInt32(int $v): self
     {
-        return $this->append($this->endian->packInt32($v));
+        return $this->append($this->order->packInt32($v));
     }
 
     public function writeUint32(int $v): self
     {
-        return $this->append($this->endian->packUint32($v));
+        return $this->append($this->order->packUint32($v));
     }
 
-    public function writeUint64(int $v): self
+    public function writeUint64(Number $v): self
     {
-        return $this->append($this->endian->packUint64($v));
+        return $this->append($this->order->packUint64($v));
     }
 
     public function writeDouble(float $v): self
     {
-        return $this->append($this->endian->packDouble($v));
+        return $this->append($this->order->packDouble($v));
     }
 
     public function writeString(string $v): self
@@ -85,15 +87,12 @@ final class Buffer implements
 
     public function writeTimestamp(\DateTimeImmutable $date): self
     {
-        $timestamp = $date->getTimestamp();
-        \assert($timestamp >= 0);
-
-        return $this->writeUint64($timestamp);
+        return $this->writeUint64(new Number($date->getTimestamp()));
     }
 
     public function writeTable(array $values): self
     {
-        return $this->reserve($this->endian->packUint32(...), static function (WriteBytes $buffer) use ($values): void {
+        return $this->reserve($this->order->packUint32(...), static function (WriteBytes $buffer) use ($values): void {
             foreach ($values as $key => $value) {
                 $buffer = $buffer
                     ->writeString((string) $key)
@@ -104,7 +103,7 @@ final class Buffer implements
 
     public function writeArray(array $values): self
     {
-        return $this->reserve($this->endian->packUint32(...), static function (WriteBytes $buffer) use ($values): void {
+        return $this->reserve($this->order->packUint32(...), static function (WriteBytes $buffer) use ($values): void {
             foreach ($values as $value) {
                 $buffer = $buffer->writeValue($value);
             }
@@ -170,52 +169,52 @@ final class Buffer implements
 
     public function readInt8(): int
     {
-        return $this->endian->unpackInt8($this->consume(1));
+        return $this->order->unpackInt8($this->consume(1));
     }
 
     public function readUint8(): int
     {
-        return $this->endian->unpackUint8($this->consume(1));
+        return $this->order->unpackUint8($this->consume(1));
     }
 
     public function readInt16(): int
     {
-        return $this->endian->unpackInt16($this->consume(2));
+        return $this->order->unpackInt16($this->consume(2));
     }
 
     public function readUint16(): int
     {
-        return $this->endian->unpackUint16($this->consume(2));
+        return $this->order->unpackUint16($this->consume(2));
     }
 
     public function readInt32(): int
     {
-        return $this->endian->unpackInt32($this->consume(4));
+        return $this->order->unpackInt32($this->consume(4));
     }
 
     public function readUint32(): int
     {
-        return $this->endian->unpackUint32($this->consume(4));
+        return $this->order->unpackUint32($this->consume(4));
     }
 
-    public function readInt64(): int
+    public function readInt64(): Number
     {
-        return $this->endian->unpackInt64($this->consume(8));
+        return $this->order->unpackInt64($this->consume(8));
     }
 
-    public function readUint64(): int
+    public function readUint64(): Number
     {
-        return $this->endian->unpackUint64($this->consume(8));
+        return $this->order->unpackUint64($this->consume(8));
     }
 
     public function readFloat(): float
     {
-        return $this->endian->unpackFloat($this->consume(4));
+        return $this->order->unpackFloat($this->consume(4));
     }
 
     public function readDouble(): float
     {
-        return $this->endian->unpackDouble($this->consume(8));
+        return $this->order->unpackDouble($this->consume(8));
     }
 
     public function readTimestamp(): \DateTimeImmutable
@@ -228,7 +227,7 @@ final class Buffer implements
         $scale = $this->readUint8();
         $value = $this->readUint32();
 
-        return (int) ($value * (10 ** $scale)); // @phpstan-ignore cast.useless
+        return (int) ($value * (10 ** $scale));
     }
 
     public function readText(): string

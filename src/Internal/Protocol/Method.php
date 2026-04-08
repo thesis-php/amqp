@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Protocol;
 
+use BcMath\Number;
 use Thesis\Amqp\Internal\Io;
 use Thesis\Amqp\Internal\Protocol\Auth\Mechanism;
-use Thesis\Endian\endian;
+use Thesis\Endian\Order;
 
 /**
  * @internal
@@ -477,11 +478,10 @@ final readonly class Method implements Frame
 
     /**
      * @param non-negative-int $channelId
-     * @param non-negative-int $deliveryTag
      */
     public static function basicAck(
         int $channelId,
-        int $deliveryTag,
+        Number $deliveryTag,
         bool $multiple = false,
     ): self {
         return new self(
@@ -497,11 +497,10 @@ final readonly class Method implements Frame
 
     /**
      * @param non-negative-int $channelId
-     * @param non-negative-int $deliveryTag
      */
     public static function basicNack(
         int $channelId,
-        int $deliveryTag,
+        Number $deliveryTag,
         bool $multiple = false,
         bool $requeue = true,
     ): self {
@@ -519,11 +518,10 @@ final readonly class Method implements Frame
 
     /**
      * @param non-negative-int $channelId
-     * @param non-negative-int $deliveryTag
      */
     public static function basicReject(
         int $channelId,
-        int $deliveryTag,
+        Number $deliveryTag,
         bool $requeue = true,
     ): self {
         return new self(
@@ -649,7 +647,7 @@ final readonly class Method implements Frame
         $writer
             ->writeUint8(FrameType::method->value)
             ->writeUint16($this->channelId)
-            ->reserve(endian::network->packUint32(...), function (Io\WriteBytes $writer): void {
+            ->reserve(Order::Network->packUint32(...), function (Io\WriteBytes $writer): void {
                 $writer
                     ->writeUint16($this->classType)
                     ->writeUint16($this->classMethod);

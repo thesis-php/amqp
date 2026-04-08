@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Delivery;
 
+use BcMath\Number;
 use Thesis\Amqp\Channel;
 use Thesis\Amqp\DeliveryMessage;
 use Thesis\Amqp\Internal\Hooks;
 use Thesis\Amqp\Internal\MessageProperties;
 use Thesis\Amqp\Internal\Protocol\Frame;
 use Thesis\Amqp\Message;
+use function Thesis\Amqp\Internal\deliveryTagToInt;
 
 /**
  * @internal
@@ -39,8 +41,7 @@ final class DeliverySupervisor
 
     private ?Frame\ContentHeader $header = null;
 
-    /** @var non-negative-int */
-    private int $messageSize = 0;
+    private Number $messageSize;
 
     private string $message = '';
 
@@ -65,6 +66,7 @@ final class DeliverySupervisor
         private readonly int $channelId,
     ) {
         $this->weakChannel = \WeakReference::create($channel);
+        $this->messageSize = new Number(0);
     }
 
     public function run(): void
@@ -166,7 +168,8 @@ final class DeliverySupervisor
     {
         if ($this->step === self::BODY) {
             $this->message .= $body->body;
-            $this->messageSize = max($this->messageSize - \strlen($body->body), 0);
+            $diff = $this->messageSize - \strlen($body->body);
+            $this->messageSize = $diff > 0 ? $diff : new Number(0);
 
             $this->runListeners();
         }
@@ -174,7 +177,7 @@ final class DeliverySupervisor
 
     private function runListeners(): void
     {
-        if ($this->messageSize !== 0) {
+        if ($this->messageSize > 0) {
             return;
         }
 
@@ -209,7 +212,7 @@ final class DeliverySupervisor
             ),
             exchange: $this->delivery->exchange ?? $this->get->exchange ?? $this->return->exchange ?? '',
             routingKey: $this->delivery->routingKey ?? $this->get->routingKey ?? $this->return->routingKey ?? '',
-            deliveryTag: $this->delivery->deliveryTag ?? $this->get->deliveryTag ?? 0,
+            deliveryTag: deliveryTagToInt($this->delivery->deliveryTag ?? $this->get->deliveryTag ?? new Number(0)),
             consumerTag: $this->delivery->consumerTag ?? '',
             redelivered: $this->delivery->redelivered ?? $this->get->redelivered ?? false,
             returned: $this->return !== null,

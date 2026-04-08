@@ -72,7 +72,7 @@ final class ConfirmationListener implements \Countable
                 }
             }
 
-            $this->complete($frame->deliveryTag, $result);
+            $this->complete(deliveryTagToInt($frame->deliveryTag), $result);
         };
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal;
 
+use BcMath\Number;
+
 /**
  * @internal
  * @param non-empty-string $query
@@ -61,4 +63,16 @@ function chunks(string $v, int $length): iterable
     foreach (str_split($v, $length) as $chunk) {
         yield $chunk;
     }
+}
+
+/**
+ * @internal
+ * @return non-negative-int
+ */
+function deliveryTagToInt(Number $deliveryTag): int
+{
+    $deliveryTag = (int) $deliveryTag->value;
+    \assert($deliveryTag >= 0);
+
+    return $deliveryTag;
 }

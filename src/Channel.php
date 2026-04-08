@@ -6,6 +6,7 @@ namespace Thesis\Amqp;
 
 use Amp\Cancellation;
 use Amp\NullCancellation;
+use BcMath\Number;
 use Revolt\EventLoop;
 use Thesis\Amqp\Internal\AtomicGet;
 use Thesis\Amqp\Internal\Batch\BatchConsumer;
@@ -165,7 +166,7 @@ final class Channel
     {
         $this->connection->writeFrame(Protocol\Method::basicAck(
             channelId: $this->channelId,
-            deliveryTag: $delivery->deliveryTag,
+            deliveryTag: new Number($delivery->deliveryTag),
             multiple: $multiple,
         ));
     }
@@ -177,7 +178,7 @@ final class Channel
     {
         $this->connection->writeFrame(Protocol\Method::basicNack(
             channelId: $this->channelId,
-            deliveryTag: $delivery->deliveryTag,
+            deliveryTag: new Number($delivery->deliveryTag),
             multiple: $multiple,
             requeue: $requeue,
         ));
@@ -190,7 +191,7 @@ final class Channel
     {
         $this->connection->writeFrame(Protocol\Method::basicReject(
             channelId: $this->channelId,
-            deliveryTag: $delivery->deliveryTag,
+            deliveryTag: new Number($delivery->deliveryTag),
             requeue: $requeue,
         ));
     }

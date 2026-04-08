@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Protocol\Frame;
 
+use BcMath\Number;
 use Thesis\Amqp\Exception\NotImplemented;
 use Thesis\Amqp\Internal\Io;
 use Thesis\Amqp\Internal\MessageProperties;
@@ -17,13 +18,12 @@ final readonly class ContentHeader implements Frame
     /**
      * @param non-negative-int $classId
      * @param non-negative-int $weight
-     * @param non-negative-int $bodySize
      * @param non-negative-int $flags
      */
     public function __construct(
         public int $classId,
         public int $weight,
-        public int $bodySize,
+        public Number $bodySize,
         public int $flags,
         public MessageProperties $properties,
     ) {}

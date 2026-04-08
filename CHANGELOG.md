@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Bump PHP to `8.4`.
+- Require `ext-bcmath`.
+- Bump `thesis/endian` to `^0.3.3`.
+- Bump `thesis/byte-order` to `^0.4.1`.
+
+### Fixed
+
+- Fix `chr()` deprecation warnings in PHP 8.5 ([#84](https://github.com/thesis-php/amqp/issues/84)).
 
 ## [1.0.0] 2025-06-07
 

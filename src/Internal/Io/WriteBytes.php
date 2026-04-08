@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Amqp\Internal\Io;
 
+use BcMath\Number;
 use Thesis\ByteWriter\Writer;
 
 /**
@@ -11,29 +12,17 @@ use Thesis\ByteWriter\Writer;
  */
 interface WriteBytes
 {
-    /**
-     * @param non-negative-int $v
-     */
     public function writeUint8(int $v): self;
 
     public function writeInt16(int $v): self;
 
-    /**
-     * @param non-negative-int $v
-     */
     public function writeUint16(int $v): self;
 
     public function writeInt32(int $v): self;
 
-    /**
-     * @param non-negative-int $v
-     */
     public function writeUint32(int $v): self;
 
-    /**
-     * @param non-negative-int $v
-     */
-    public function writeUint64(int $v): self;
+    public function writeUint64(Number $v): self;
 
     public function writeDouble(float $v): self;
 
@@ -60,7 +49,7 @@ interface WriteBytes
     public function write(string $v): self;
 
     /**
-     * @param callable(non-negative-int): non-empty-string $reserve
+     * @param callable(int): non-empty-string $reserve
      * @param callable(self): void $write
      */
     public function reserve(callable $reserve, callable $write): self;
